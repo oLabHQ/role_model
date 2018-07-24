@@ -134,6 +134,11 @@ class Role(NameSlugTimeStampedUUIDModel):
                               related_name='roles',
                               on_delete='CASCADE')
 
+
+    @property
+    def organization(self):
+        return self.group.organization
+
     def __str__(self):
         return "{} (\n  {})".format(
             super().__str__(), "\n  ".join([

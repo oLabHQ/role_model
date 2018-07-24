@@ -5,8 +5,9 @@ from history.models import History
 
 
 class HistoryAdmin(admin.ModelAdmin):
-    list_display = ('content_type', 'object_id_link', 'object_description',
-                    'modification', 'changes_table')
+    list_display = ('id', 'content_type', 'object_id_link',
+                    'object_description', 'modification', 'changes_table',
+                    'created')
 
     def object_description(self, instance):
         return str(instance.instance)

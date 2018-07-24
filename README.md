@@ -3,6 +3,8 @@
 At the moment this is a project to store a company's list of responsibilities
 it's employees performed and the responsibilities assigned to each role.
 
+It's meant to be a DESCRIPTIVE tool, not a prescriptive one.
+
 # Quickstart #
 
 ```

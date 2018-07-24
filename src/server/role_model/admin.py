@@ -34,6 +34,13 @@ class GroupAdmin(OwnershipAdminMixin, admin.ModelAdmin):
     search_fields = ['organization__name']
 
 
+class ResponsibilityAdmin(OwnershipAdminMixin, admin.ModelAdmin):
+    list_display = ('operator', 'prose', 'organization_link', 'id',
+                    'created')
+    list_display_links = ('operator', 'id')
+    search_fields = ['organization__name']
+
+
 class RoleAdmin(OwnershipAdminMixin, admin.ModelAdmin):
     list_display = ('name', 'responsibilities_table', 'organization_link',
                     'id', 'created')
@@ -80,4 +87,4 @@ admin.site.register(Facet, admin.ModelAdmin)
 admin.site.register(ContentType, admin.ModelAdmin)
 # admin.site.register(Assignment, admin.ModelAdmin)
 admin.site.register(Role, RoleAdmin)
-admin.site.register(Responsibility, admin.ModelAdmin)
+admin.site.register(Responsibility, ResponsibilityAdmin)

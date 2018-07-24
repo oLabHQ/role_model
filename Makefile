@@ -45,8 +45,13 @@ requirements: venv
 migrate:
 		$(manage) migrate
 
+deletemigrations:
+		rm -rf src/server/*/migrations/
+
 makemigrations:
-		$(manage) makemigrations
+		$(manage) makemigrations common crm history role_model server
+
+resetmigrations: deletemigrations makemigrations
 
 install: requirements reset makemigrations migrate
 

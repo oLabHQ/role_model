@@ -11,7 +11,7 @@ class HistoryTestCase(TestCase):
 
     def test_person_history_absent(self):
         with self.modify_settings(
-                INSTALLED_APPS = {'append': 'history.tests'}):
+                INSTALLED_APPS={'append': 'history.tests'}):
             call_command('migrate', 'tests')
             register_models()
 
@@ -24,8 +24,8 @@ class HistoryTestCase(TestCase):
 
     def test_person_history_present(self):
         with self.modify_settings(
-                INSTALLED_APPS = {'append': 'history.tests'},
-                HISTORY_MODELS = {'prepend': 'tests.Person'}):
+                INSTALLED_APPS={'append': 'history.tests'},
+                HISTORY_MODELS={'prepend': 'tests.Person'}):
 
             call_command('migrate', 'tests')
             register_models()

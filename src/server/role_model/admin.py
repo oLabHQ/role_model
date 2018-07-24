@@ -1,14 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from common.language import join_comma
 from role_model.models import (
     Deliverable,
     Group,
     Format,
     Facet,
     ContentType,
-    Assignment,
+    # Assignment,
     Role,
     Responsibility,)
 
@@ -16,7 +15,8 @@ from role_model.models import (
 class OwnershipAdminMixin:
     def organization_link(self, instance):
         from django.urls import reverse
-        return format_html("<a href='{0}'>{1}</a>",
+        return format_html(
+            "<a href='{0}'>{1}</a>",
             reverse('admin:{}_{}_change'.format(
                 instance.organization._meta.app_label.lower(),
                 instance.organization._meta.model_name.lower()

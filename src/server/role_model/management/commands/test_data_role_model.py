@@ -1,8 +1,8 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from role_model.models import (
-    Assignment,
+    # Assignment,
     ContentType,
     Deliverable,
     Facet,
@@ -11,6 +11,7 @@ from role_model.models import (
     Responsibility,
     Role)
 from crm.models import Organization
+
 
 class Command(BaseCommand):
     help = 'Set up test data for role_model app.'
@@ -31,17 +32,21 @@ class Command(BaseCommand):
                 Format(name="Requirements Document",
                        description="Specific product requirements"),
                 Format(name="Build Ticket",
-                       description="Ticket containing approach of implementation"),
+                       description="Ticket containing approach of "
+                                   "implementation"),
                 Format(name="Test Product",
-                       description="Implemented software deployed to test server"),
+                       description="Implemented software deployed to "
+                                   "test server"),
                 Format(name="Deployed Product",
                        description="A deployed product"),
                 Format(name="Use", description="Use of the product"),
                 Format(name="Query", description="A query about the product"),
-                Format(name="Response", description="A response to the customer"),
+                Format(name="Response",
+                       description="A response to the customer"),
                 Format(name="Use Pattern", description="A pattern of queries"),
                 Format(name="Bug Report", description="A bug report"),
-                Format(name="Feature Request", description="A feature request"),
+                Format(name="Feature Request",
+                       description="A feature request"),
                 bulk=False)
 
             self.group_user = Group.objects.create(
@@ -82,7 +87,8 @@ class Command(BaseCommand):
                     facet=self.facet_user_interface),
                 ContentType(
                     group=self.group_support,
-                    format=self.deliverable.formats.get(name="Feature Request"),
+                    format=self.deliverable.formats.get(
+                        name="Feature Request"),
                     facet=self.facet_user_interface),
                 ContentType(
                     group=self.group_product,
@@ -90,7 +96,8 @@ class Command(BaseCommand):
                     facet=self.facet_user_interface),
                 ContentType(
                     group=self.group_product,
-                    format=self.deliverable.formats.get(name="Requirements Document"),
+                    format=self.deliverable.formats.get(
+                        name="Requirements Document"),
                     facet=self.facet_user_interface),
                 ContentType(
                     group=self.group_product,
@@ -102,7 +109,8 @@ class Command(BaseCommand):
                     facet=self.facet_user_interface),
                 ContentType(
                     group=self.group_product,
-                    format=self.deliverable.formats.get(name="Deployed Product"),
+                    format=self.deliverable.formats.get(
+                        name="Deployed Product"),
                     facet=self.facet_user_interface),
                 ContentType(
                     group=self.group_support,
@@ -122,7 +130,8 @@ class Command(BaseCommand):
                     facet=self.facet_support_interface),
                 ContentType(
                     group=self.group_operations,
-                    format=self.deliverable.formats.get(name="Feature Request"),
+                    format=self.deliverable.formats.get(
+                        name="Feature Request"),
                     facet=self.facet_support_interface),
                 ContentType(
                     group=self.group_product,
@@ -141,8 +150,8 @@ class Command(BaseCommand):
 
             responsibility = Responsibility.objects.create(
                 organization=self.organization,
-                operator = Responsibility.Operator.transform,
-                output_type = get_content_type("Product", "Build Ticket")
+                operator=Responsibility.Operator.transform,
+                output_type=get_content_type("Product", "Build Ticket")
             )
             responsibility.input_types.set([
                 get_content_type("Product", "Requirements Document")])
@@ -162,8 +171,8 @@ class Command(BaseCommand):
 
             responsibility = Responsibility.objects.create(
                 organization=self.organization,
-                operator = Responsibility.Operator.transform,
-                output_type = get_content_type("Product", "Test Product")
+                operator=Responsibility.Operator.transform,
+                output_type=get_content_type("Product", "Test Product")
             )
             responsibility.input_types.set([
                 get_content_type("Product", "Build Ticket")])

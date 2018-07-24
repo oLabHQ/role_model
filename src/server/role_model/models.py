@@ -127,13 +127,12 @@ class Assignment(TimeStampedUUIDModel):
 
 class Role(NameSlugTimeStampedUUIDModel):
     responsibilities = models.ManyToManyField('Responsibility',
-                                              #through='Assignment'
+                                              # through='Assignment'
                                               )
     users = models.ManyToManyField(settings.AUTH_USER_MODEL)
     group = models.ForeignKey('role_model.Group',
                               related_name='roles',
                               on_delete='CASCADE')
-
 
     @property
     def organization(self):
@@ -199,17 +198,20 @@ class Responsibility(Ownership, TimeStampedUUIDModel):
            PRODUCT's build ticket of RaceGame's user interface.
         """
         return Responsibility.OPERATOR_TYPE_PROSE_FORMAT[self.operator].format(
-            input_type=join_and((value.prose(plural=False)
-                for value in self.input_types.all()), plural=False),
-            input_types=join_and((value.prose(plural=True)
-                for value in self.input_types.all()), plural=True),
+            input_type=join_and(
+                (value.prose(plural=False)
+                    for value in self.input_types.all()), plural=False),
+            input_types=join_and(
+                (value.prose(plural=True)
+                    for value in self.input_types.all()), plural=True),
             output_type=self.output_type.prose())
 
     def __str__(self):
         """
         Return string representation of this instance.
         For example:
-        transform (RaceGame:Product:User Interface<Requirements Document> → RaceGame:Product:User Interface<Build Ticket>)
+        transform (RaceGame:Product:User Interface<Requirements Document> →
+        RaceGame:Product:User Interface<Build Ticket>)
         """
         return "{} ({} → {})".format(
             str(self.operator.value),

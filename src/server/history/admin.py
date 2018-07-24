@@ -14,7 +14,8 @@ class HistoryAdmin(admin.ModelAdmin):
 
     def object_id_link(self, instance):
         from django.urls import reverse
-        return format_html("<a href='{0}'>{1}</a>",
+        return format_html(
+            "<a href='{0}'>{1}</a>",
             reverse('admin:{}_{}_change'.format(
                 instance.content_type.app_label.lower(),
                 instance.content_type.model.lower()

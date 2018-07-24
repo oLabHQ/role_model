@@ -5,8 +5,15 @@ from django.urls import reverse
 
 import schema
 
-from role_model.models import *
-from crm.models import *
+from role_model.models import (
+    ContentType,
+    Deliverable,
+    Facet,
+    Format,
+    Group,
+    Responsibility,
+    Role)
+from crm.models import Organization
 
 
 class RoleModelAPITestCase(TestCase):
@@ -21,12 +28,12 @@ class RoleModelAPITestCase(TestCase):
 
         response = self.client.get(
             reverse('graphql'), {
-            'query': """
-                query Query {
-                    deliverable {
-                      id
-                    }
-                }"""})
+                'query': """
+                    query Query {
+                        deliverable {
+                          id
+                        }
+                    }"""})
 
         self.assertEqual(response.status_code, 200)
 
@@ -121,7 +128,8 @@ class RoleModelTestCase(TestCase):
                 facet=self.facet_user_interface),
             ContentType(
                 group=self.group_product,
-                format=self.deliverable.formats.get(name="Requirements Document"),
+                format=self.deliverable.formats.get(
+                    name="Requirements Document"),
                 facet=self.facet_user_interface),
             ContentType(
                 group=self.group_product,
@@ -172,8 +180,8 @@ class RoleModelTestCase(TestCase):
 
         responsibility = Responsibility.objects.create(
             organization=self.organization,
-            operator = Responsibility.Operator.transform,
-            output_type = get_content_type("Product", "Build Ticket")
+            operator=Responsibility.Operator.transform,
+            output_type=get_content_type("Product", "Build Ticket")
         )
         responsibility.input_types.set([
             get_content_type("Product", "Requirements Document")])
@@ -189,8 +197,8 @@ class RoleModelTestCase(TestCase):
 
         responsibility = Responsibility.objects.create(
             organization=self.organization,
-            operator = Responsibility.Operator.transform,
-            output_type = get_content_type("Product", "Test Product")
+            operator=Responsibility.Operator.transform,
+            output_type=get_content_type("Product", "Test Product")
         )
         responsibility.input_types.set([
             get_content_type("Product", "Build Ticket")])
@@ -198,92 +206,3 @@ class RoleModelTestCase(TestCase):
         print(responsibility.prose())
         developer.responsibilities.add(responsibility)
         print(developer)
-
-
-        # self.division_product = Division.objects.create('Product')
-        # self.format_concept = Format.objects.create(
-        #     name="Concept",
-        #     division=self.division_product)
-        # self.format_requirements = Format.objects.create(
-        #     name="Requirements",
-        #     division=self.division_product)
-        # self.format_ticket = Format.objects.create(
-        #     name="Ticket",
-        #     division=self.division_product)
-        # self.format_test = Format.objects.create(
-        #     name="Test Implementation",
-        #     division=self.division_product)
-        # self.format_test_bug_report = Format.objects.create(
-        #     name="Test Bug Report",
-        #     division=self.division_product)
-        # self.format_implementation = Format.objects.create(
-        #     name="Implementation",
-        #     division=self.division_product)
-        #
-        # self.division_customer = Division.objects.create('Customer Support')
-        # self.format_use = Format.objects.create(
-        #     name="Use",
-        #     division=self.division_customer)
-        # self.format_query = Format.objects.create(
-        #     name="Query",
-        #     division=self.division_customer)
-        # self.format_pattern = Format.objects.create(
-        #     name="Pattern",
-        #     division=self.division_customer)
-        # self.format_bug_report = Format.objects.create(
-        #     name="Bug Report",
-        #     division=self.division_customer)
-        # self.format_feature_request = Format.objects.create(
-        #     name="Feature Request",
-        #     division=self.division_customer)
-        #
-        # self.division_operations = Division.objects.create('Operations')
-        #
-        #
-        # self.deliverable = Chart.objects.create(name='RaceGame')
-        # self.facet_admin = Facet.objects.create(
-        #     name="Admin Interface",
-        #     deliverable=chart)
-        # self.facet_user_interface = Facet.objects.create(
-        #     name="User Interface",
-        #     deliverable=chart)
-        #
-
-
-
-
-        # process = [
-        #     "Customer Use",
-        #     "Customer Query",
-        #     "Customer Usage Pattern",
-        #     "Concept",
-        #     "Requirement",
-        #     "Ticket",
-        #     "Implementation"
-        # ]
-        # aspects = [
-        #     "User Interface",
-        #     "Admin Interface",
-        #     "Analytics Interface"
-        # ]
-
-
-        # self.process = [
-        #     ([("Marketing",), ("Customer",)], ("Product", "Concepts", "Product"))
-        # ]
-        #
-        # self.information_types = []
-        #
-        # information_product = self.add_information_type(name="Product")
-        # information_customer = self.add_information_type(name="Customer")
-        # information_marketing = self.add_information_type(name="Marketing")
-        #
-        # self.add_information_type(name="Concepts", parent=information_product)
-        # self.add_information_type(name="Concepts", parent=information_product)
-
-    # def add_information_type(self, *args, **kwargs):
-        # instance = InformationType(*args, **kwargs)
-        # instance.clean()
-        # instance.save()
-        # self.information_types.append(instance)
-        # return instance

@@ -8,6 +8,7 @@ from role_model.models import (
     Facet,
     Format,
     Group,
+    Operator,
     Responsibility,
     Role)
 from crm.models import Organization
@@ -24,170 +25,224 @@ class Command(BaseCommand):
     """
     help = 'Set up test data for role_model app.'
 
+    FORMATS = [
+        ('Concept', 'Concept of new features'),
+        ('Requirements Document', 'Specific product requirements'),
+        ('Build Ticket', 'Ticket containing approach of implementation'),
+        ('Test Product', 'Implemented software deployed to test server'),
+        ('Test', 'A test of the test product'),
+        ('Deployed Product', 'A deployed product'),
+        ('Use', 'Use of the product'),
+        ('Query', 'A query about the product'),
+        ('Response', 'A response to the customer'),
+        ('Use Pattern', 'A pattern of queries'),
+        ('Bug Report', 'A bug report'),
+        ('Feature Request', 'A feature request'),
+        ('A/B Experiment Proposal', 'An A/B Experiment Proposal'),
+        ('A/B Experiment Review', 'An A/B Experiment Review'),
+        ('A/B Experiment Setup', 'An A/B Experiment Setup'),
+        ('A/B Experiment Requirements', 'An A/B Experiment Requirements'),
+    ]
+
+    GROUPS = [
+        'User',
+        'Support',
+        'Product',
+        'Marketing',
+        'Operations',
+        'Support Interface',
+        'User Interface',
+    ]
+
+    FACETS = [
+        'User Interface',
+        'Support Interface'
+    ]
+
+    CONTENT_TYPES = [
+        ('User', 'User Interface', 'Use'),
+        ('User', 'User Interface', 'Query'),
+        ('User', 'User Interface', 'Use Pattern'),
+        ('Support', 'User Interface', 'Bug Report'),
+        ('Support', 'User Interface', 'Feature Request'),
+        ('Product', 'User Interface', 'Concept'),
+        ('Product', 'User Interface', 'Requirements Document'),
+        ('Product', 'User Interface', 'Build Ticket'),
+        ('Product', 'User Interface', 'Test Product'),
+        ('Product', 'User Interface', 'Test'),
+        ('Product', 'User Interface', 'Deployed Product'),
+        ('Marketing', 'User Interface', 'A/B Experiment Proposal'),
+        ('Marketing', 'User Interface', 'A/B Experiment Review'),
+        ('Marketing', 'User Interface', 'A/B Experiment Setup'),
+        ('Marketing', 'User Interface', 'A/B Experiment Requirements'),
+        ('Support', 'Support Interface', 'Use'),
+        ('Support', 'Support Interface', 'Query'),
+        ('Support', 'Support Interface', 'Use Pattern'),
+        ('Operations', 'Support Interface', 'Bug Report'),
+        ('Operations', 'Support Interface', 'Feature Request'),
+        ('Product', 'Support Interface', 'Concept'),
+        ('Product', 'Support Interface', 'Requirements Document'),
+        ('Product', 'Support Interface', 'Build Ticket'),
+        ('Product', 'Support Interface', 'Test Product'),
+        ('Product', 'Support Interface', 'Deployed Product'),
+    ]
+
+    ROLES = [
+        ('Marketing', 'Growth Hacker'),
+        ('Marketing', 'Chief Marketing Officer'),
+        ('Operations', 'Chief Operations Officer'),
+        ('Product', 'Software Engineer'),
+        ('Product', 'Test Engineer'),
+        ('Product', 'UX Designer'),
+        ('Product', 'Chief Technology Officer'),
+        ('Product', 'Product Owner'),
+        ('Product', 'Systems Analyst'),
+        ('Support', 'Customer Support'),
+        ('User', 'Customer'),
+    ]
+
+    RESPONSIBILITIES = [
+        (Operator.filter, ('Customer',),
+            ('User', 'User Interface', 'Query'), [
+                ('User', 'User Interface', 'Use')
+            ]),
+        (Operator.reduce, ('Customer Support',),
+            ('User', 'User Interface', 'Use Pattern'), [
+                ('User', 'User Interface', 'Query')
+            ]),
+        (Operator.reduce, ('Customer Support',),
+            ('Support', 'User Interface', 'Bug Report'), [
+                ('User', 'User Interface', 'Query')
+            ]),
+        (Operator.reduce, ('Customer Support',),
+            ('Support', 'User Interface', 'Feature Request'), [
+                ('User', 'User Interface', 'Query')
+            ]),
+        (Operator.reduce, ('Product Owner',),
+            ('User', 'User Interface', 'Use Pattern'), [
+                ('User', 'User Interface', 'Use')
+            ]),
+        (Operator.combine, ('Product Owner',),
+            ('Product', 'User Interface', 'Concept'), [
+                ('Support', 'User Interface', 'Feature Request'),
+                ('User', 'User Interface', 'Use Pattern')
+            ]),
+        (Operator.transform, ('UX Designer',),
+            ('Product', 'User Interface', 'Requirements Document'), [
+                ('Product', 'User Interface', 'Concept')
+            ]),
+        (Operator.transform, ('Chief Technology Officer',),
+            ('Product', 'User Interface', 'Build Ticket'), [
+                ('Product', 'User Interface', 'Requirements Document')
+            ]),
+        (Operator.sort, ('Product Owner',),
+            ('Support', 'User Interface', 'Bug Report'), [
+                ('Support', 'User Interface', 'Bug Report')
+            ]),
+        (Operator.transform, ('Chief Technology Officer',),
+            ('Product', 'User Interface', 'Build Ticket'), [
+                ('Support', 'User Interface', 'Bug Report')
+            ]),
+        (Operator.transform, ('Software Engineer',),
+            ('Product', 'User Interface', 'Test Product'), [
+                ('Product', 'User Interface', 'Build Ticket')
+            ]),
+        (Operator.transform, ('Test Engineer',),
+            ('Product', 'User Interface', 'Test'), [
+                ('Product', 'User Interface', 'Test Product')
+            ]),
+        (Operator.filter, ('Test Engineer',),
+            ('Product', 'User Interface', 'Build Ticket'), [
+                ('Product', 'User Interface', 'Test')
+            ]),
+        (Operator.combine, ('Test Engineer',),
+            ('Product', 'User Interface', 'Deployed Product'), [
+                ('Product', 'User Interface', 'Test'),
+                ('Product', 'User Interface', 'Test Product'),
+            ]),
+    ]
+
     def add_arguments(self, parser):
         pass
 
-    def handle(self, *args, **options):
-        print("Setting up test data.")
+    def create_deliverable(self, name='RaceGame'):
+        self.deliverable = Deliverable.objects.create(
+            name='RaceGame',
+            organization=self.organization)
+
+    def create_organization(self, name='iOSLtd'):
+        self.organization = Organization.objects.create(name='iOSLtd')
+
+    def create_formats(self):
+        self.formats = {}
         with transaction.atomic():
-            self.organization = Organization.objects.create(name="iOSLtd")
-            self.deliverable = Deliverable.objects.create(
-                name='RaceGame',
-                organization=self.organization)
-            self.deliverable.formats.add(
-                Format(name="Concept",
-                       description="Concept of new features"),
-                Format(name="Requirements Document",
-                       description="Specific product requirements"),
-                Format(name="Build Ticket",
-                       description="Ticket containing approach of "
-                                   "implementation"),
-                Format(name="Test Product",
-                       description="Implemented software deployed to "
-                                   "test server"),
-                Format(name="Deployed Product",
-                       description="A deployed product"),
-                Format(name="Use", description="Use of the product"),
-                Format(name="Query", description="A query about the product"),
-                Format(name="Response",
-                       description="A response to the customer"),
-                Format(name="Use Pattern", description="A pattern of queries"),
-                Format(name="Bug Report", description="A bug report"),
-                Format(name="Feature Request",
-                       description="A feature request"),
-                bulk=False)
+            for name, description in self.FORMATS:
+                self.formats[name] = Format.objects.create(
+                    name=name,
+                    description=description,
+                    deliverable=self.deliverable)
 
-            self.group_user = Group.objects.create(
-                name="User",
-                organization=self.organization)
-            self.group_support = Group.objects.create(
-                name="Support",
-                organization=self.organization)
-            self.group_product = Group.objects.create(
-                name="Product",
-                organization=self.organization)
-            self.group_operations = Group.objects.create(
-                name="Operations",
-                organization=self.organization)
-            self.facet_support_interface = Facet.objects.create(
-                name="Support Interface",
-                deliverable=self.deliverable)
-            self.facet_user_interface = Facet.objects.create(
-                name="User Interface",
-                deliverable=self.deliverable)
+    def create_groups(self):
+        self.groups = {}
+        with transaction.atomic():
+            for name in self.GROUPS:
+                self.groups[name] = Group.objects.create(
+                    name=name,
+                    organization=self.organization)
 
-            self.deliverable.content_types.add(
-                ContentType(
-                    group=self.group_user,
-                    format=self.deliverable.formats.get(name="Use"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_user,
-                    format=self.deliverable.formats.get(name="Query"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_user,
-                    format=self.deliverable.formats.get(name="Use Pattern"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_support,
-                    format=self.deliverable.formats.get(name="Bug Report"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_support,
-                    format=self.deliverable.formats.get(
-                        name="Feature Request"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_product,
-                    format=self.deliverable.formats.get(name="Concept"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_product,
-                    format=self.deliverable.formats.get(
-                        name="Requirements Document"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_product,
-                    format=self.deliverable.formats.get(name="Build Ticket"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_product,
-                    format=self.deliverable.formats.get(name="Test Product"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_product,
-                    format=self.deliverable.formats.get(
-                        name="Deployed Product"),
-                    facet=self.facet_user_interface),
-                ContentType(
-                    group=self.group_support,
-                    format=self.deliverable.formats.get(name="Use"),
-                    facet=self.facet_support_interface),
-                ContentType(
-                    group=self.group_support,
-                    format=self.deliverable.formats.get(name="Query"),
-                    facet=self.facet_support_interface),
-                ContentType(
-                    group=self.group_support,
-                    format=self.deliverable.formats.get(name="Use Pattern"),
-                    facet=self.facet_support_interface),
-                ContentType(
-                    group=self.group_operations,
-                    format=self.deliverable.formats.get(name="Bug Report"),
-                    facet=self.facet_support_interface),
-                ContentType(
-                    group=self.group_operations,
-                    format=self.deliverable.formats.get(
-                        name="Feature Request"),
-                    facet=self.facet_support_interface),
-                ContentType(
-                    group=self.group_product,
-                    format=self.deliverable.formats.get(name="Concept"),
-                    facet=self.facet_support_interface),
-                bulk=False)
+    def create_facets(self):
+        self.facets = {}
+        with transaction.atomic():
+            for name in self.FACETS:
+                self.facets[name] = Facet.objects.create(
+                    name=name,
+                    deliverable=self.deliverable)
 
-            def get_content_type(group, format, facet="User Interface"):
-                return ContentType.objects.get(
-                    group__name=group,
-                    format__name=format,
-                    facet__name=facet)
+    def create_content_types(self):
+        self.content_types = {}
+        with transaction.atomic():
+            for group, facet, format in self.CONTENT_TYPES:
+                self.content_types[(group, facet, format)] = \
+                    ContentType.objects.create(
+                        group=self.groups[group],
+                        facet=self.facets[facet],
+                        format=self.formats[format],
+                        deliverable=self.deliverable)
 
-            for content_type in self.deliverable.content_types.all():
-                print(content_type.prose())
+    def create_roles(self):
+        self.roles = {}
+        with transaction.atomic():
+            for group, name in self.ROLES:
+                self.roles[name] = Role.objects.create(
+                    name=name,
+                    group=self.groups[group])
 
-            responsibility = Responsibility.objects.create(
-                organization=self.organization,
-                operator=Responsibility.Operator.transform,
-                output_type=get_content_type("Product", "Build Ticket")
-            )
-            responsibility.input_types.set([
-                get_content_type("Product", "Requirements Document")])
+    def create_responsibilities(self):
+        self.responsibilities = {}
+        with transaction.atomic():
+            for operator, roles, output_type, input_types in \
+                    self.RESPONSIBILITIES:
+                self.responsibilities[roles, output_type] = \
+                    Responsibility.objects.create(
+                        output_type=self.content_types[output_type],
+                        operator=operator,
+                        organization=self.organization)
+                for name in roles:
+                    self.roles[name].responsibilities.add(
+                        self.responsibilities[roles, output_type])
 
-            print(responsibility.prose())
-            # print(responsibility.prose())
+                for input_type in input_types:
+                    self.responsibilities[roles, output_type].input_types \
+                        .add(self.content_types[input_type])
 
-            developer = Role.objects.create(
-                name="developer",
-                group=self.group_product)
-
-            # Assignment.objects.create(
-            #     role=developer,
-            #     responsibility=responsibility,
-            #     status = Assignment.Status.formal)
-            developer.responsibilities.add(responsibility)
-
-            responsibility = Responsibility.objects.create(
-                organization=self.organization,
-                operator=Responsibility.Operator.transform,
-                output_type=get_content_type("Product", "Test Product")
-            )
-            responsibility.input_types.set([
-                get_content_type("Product", "Build Ticket")])
-
-            # Assignment.objects.create(
-            #     role=developer,
-            #     responsibility=responsibility,
-            #     status = Assignment.Status.formal)
-            developer.responsibilities.add(responsibility)
-            print(developer)
+    def handle(self, *args, **options):
+        print('Setting up test data.')
+        with transaction.atomic():
+            self.create_organization()
+            self.create_deliverable()
+            self.create_groups()
+            self.create_facets()
+            self.create_formats()
+            self.create_content_types()
+            self.create_roles()
+            self.create_responsibilities()

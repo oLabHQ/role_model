@@ -14,6 +14,14 @@ from crm.models import Organization
 
 
 class Command(BaseCommand):
+    """
+    Set up local development data for role_model app. Expects a blank database.
+
+    Since this is more like scaffolding, be wary of being too eager to
+    implement methods to refactor this code; There might be more optimal
+    function calling patterns discovered in the future when implementing
+    the business logic, more suitable to our use cases.
+    """
     help = 'Set up test data for role_model app.'
 
     def add_arguments(self, parser):

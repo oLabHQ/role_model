@@ -12,6 +12,13 @@ from jsondiff import diff
 
 
 class HistoryManager(models.Manager):
+    """
+    Add default prefetch_related.
+    Reduces History Admin Change List page number of queries by 70%.
+    """
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related('instance')
+
     def previous(self, instance):
         """
         Return the latest history object for a given instance, if it exists.
@@ -39,15 +46,6 @@ class HistoryManager(models.Manager):
             instance=instance,
             serialized_data=serialized_data,
             delta=json.loads(delta))
-
-
-class HistoryManager(models.Manager):
-    """
-    Add default prefetch_related.
-    Reduces History Admin Change List page number of queries by 70%.
-    """
-    def get_queryset(self):
-        return super().get_queryset().prefetch_related('instance')
 
 
 class History(TimeStampedModel):

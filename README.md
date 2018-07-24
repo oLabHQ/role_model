@@ -8,8 +8,10 @@ It's meant to be a DESCRIPTIVE tool, not a prescriptive one.
 # Quickstart #
 
 ```
-make install
-make run
+cd targets
+make all
+make test
+make lint
 ```
 
 # Project Implementation Plan #

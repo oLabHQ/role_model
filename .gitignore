@@ -1,2 +1,9 @@
 venv
 __pycache__
+targets/createdb
+targets/install
+targets/makemigrations
+targets/migrate
+targets/requirements
+targets/superuser
+targets/test_data

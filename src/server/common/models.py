@@ -41,7 +41,7 @@ class NameSlugModel(models.Model):
         return self.name
 
 
-class NameSlugTimeStampedUUIDModel(NameSlugModel, UUIDModel):
+class NameSlugTimeStampedUUIDModel(NameSlugModel, TimeStampedUUIDModel):
     """
     This base class gives the inherited model to a uuid primary key, `created`,
     `updated` fields, and a `name` and `slug` field.

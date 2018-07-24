@@ -20,6 +20,8 @@ export python_create_superuser
 
 run:
 		$(manage) runserver
+
+open:
 		open http://localhost:8000/admin/login/
 
 test:

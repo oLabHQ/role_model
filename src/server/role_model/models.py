@@ -41,6 +41,10 @@ class Format(NameSlugTimeStampedUUIDModel):
     deliverable = models.ForeignKey('Deliverable', related_name='formats',
                                     on_delete='CASCADE')
 
+    @property
+    def organization(self):
+        return self.deliverable.organization
+
 
 class Facet(NameSlugTimeStampedUUIDModel):
     """
@@ -53,6 +57,10 @@ class Facet(NameSlugTimeStampedUUIDModel):
     deliverable = models.ForeignKey('Deliverable',
                                     related_name='facets', on_delete='CASCADE')
 
+    @property
+    def organization(self):
+        return self.deliverable.organization
+
 
 class ContentTypeManager(models.Manager):
     """
@@ -62,6 +70,7 @@ class ContentTypeManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().select_related(
             'deliverable',
+            'deliverable__organization',
             'group',
             'facet',
             'format')
@@ -94,6 +103,10 @@ class ContentType(TimeStampedUUIDModel):
     def __str__(self):
         return ":".join([str(self.deliverable), str(self.group),
                          ("{}<{}>").format(self.facet, self.format)])
+
+    @property
+    def organization(self):
+        return self.deliverable.organization
 
     def prose(self, plural=False):
         """

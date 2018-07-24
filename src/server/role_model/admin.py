@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from common import admin_change_url
+from common import admin_change_url, admin_change_link
 
 from role_model.models import (
     Deliverable,
@@ -14,22 +14,27 @@ from role_model.models import (
 
 
 class OwnershipAdminMixin:
+
     def organization_link(self, instance):
-        from django.urls import reverse
-        return format_html(
-            "<a href='{0}'>{1}</a>",
-            admin_change_url(instance.organization),
-            str(instance.organization) or instance.organization.id)
+        return admin_change_link(instance.organization)
 
     organization_link.allow_tags = True
     organization_link.short_description = "organization"
 
 
+class HasDeliverableAdminMixin:
+    def deliverable_link(self, instance):
+        return admin_change_link(instance.deliverable)
+
+    deliverable_link.allow_tags = True
+    deliverable_link.short_description = "deliverable"
+
+
 class GroupAdmin(OwnershipAdminMixin, admin.ModelAdmin):
+    search_fields = ['organization__name']
+    list_display_links = ('name', 'id')
     list_display = ('name', 'organization_link', 'id',
                     'created')
-    list_display_links = ('name', 'id')
-    search_fields = ['organization__name']
 
 
 class ResponsibilityAdmin(OwnershipAdminMixin, admin.ModelAdmin):
@@ -39,13 +44,7 @@ class ResponsibilityAdmin(OwnershipAdminMixin, admin.ModelAdmin):
     search_fields = ['organization__name']
 
     def output_type_link(self, instance):
-        html_args = []
-        html = []
-        html.append('<a href="{}">{}</a>')
-        html_args.append(admin_change_url(instance.output_type))
-        html_args.append(str(instance.output_type))
-
-        return format_html("\n".join(html), *html_args)
+        return admin_change_link(instance.output_type)
 
     output_type_link.allow_tags = True
     output_type_link.short_description = "output type"
@@ -59,17 +58,12 @@ class ResponsibilityAdmin(OwnershipAdminMixin, admin.ModelAdmin):
             for input_type in input_types:
                 html.append('<tr>')
                 html.append('<td>')
-                html.append('<a href="{}">{}</a>')
-                html_args.append(admin_change_url(input_type))
-                html_args.append(str(input_type))
+                html.append(admin_change_link(input_type))
                 html.append('</td>')
                 html.append('</tr>')
             html.append('</table>')
         elif input_types:
-            input_type = input_types.pop()
-            html.append('<a href="{}">{}</a>')
-            html_args.append(admin_change_url(input_type))
-            html_args.append(str(input_type))
+            return admin_change_link(input_types[0])
 
         return format_html("\n".join(html), *html_args)
 
@@ -116,11 +110,64 @@ class RoleAdmin(OwnershipAdminMixin, admin.ModelAdmin):
     responsibilities_table.short_description = "responsibilities"
 
 
-admin.site.register(Deliverable, admin.ModelAdmin)
+class FormatAdmin(
+        HasDeliverableAdminMixin,
+        OwnershipAdminMixin,
+        admin.ModelAdmin):
+
+    list_display = ('name', 'deliverable_link', 'organization_link', 'id',
+                    'created')
+    list_display_links = ('name', 'id')
+
+    def deliverable_link(self, instance):
+        return admin_change_link(instance.deliverable)
+
+    deliverable_link.allow_tags = True
+    deliverable_link.short_description = "deliverable"
+
+
+FacetAdmin = FormatAdmin
+
+
+class DeliverableAdmin(OwnershipAdminMixin, admin.ModelAdmin):
+    list_display = ('name', 'organization_link', 'id',
+                    'created')
+    list_display_links = ('name', 'id')
+
+
+class ContentTypeAdmin(
+        HasDeliverableAdminMixin,
+        OwnershipAdminMixin,
+        admin.ModelAdmin):
+
+    list_display = ('prose', 'deliverable_link', 'group_link', 'facet_link',
+                    'format_link', 'organization_link', 'id', 'created')
+    list_display_links = ('prose', 'id')
+
+    def group_link(self, instance):
+        return admin_change_link(instance.group)
+
+    group_link.allow_tags = True
+    group_link.short_description = "group"
+
+    def facet_link(self, instance):
+        return admin_change_link(instance.facet)
+
+    facet_link.allow_tags = True
+    facet_link.short_description = "facet"
+
+    def format_link(self, instance):
+        return admin_change_link(instance.format)
+
+    format_link.allow_tags = True
+    format_link.short_description = "format"
+
+
+admin.site.register(Deliverable, DeliverableAdmin)
 admin.site.register(Group, GroupAdmin)
-admin.site.register(Format, admin.ModelAdmin)
-admin.site.register(Facet, admin.ModelAdmin)
-admin.site.register(ContentType, admin.ModelAdmin)
+admin.site.register(Format, FormatAdmin)
+admin.site.register(Facet, FacetAdmin)
+admin.site.register(ContentType, ContentTypeAdmin)
 # admin.site.register(Assignment, admin.ModelAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Responsibility, ResponsibilityAdmin)

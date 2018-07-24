@@ -271,9 +271,9 @@ class Responsibility(Ownership, TimeStampedUUIDModel):
         transform (RaceGame:Product:User Interface<Requirements Document> →
         RaceGame:Product:User Interface<Build Ticket>)
         """
-        return "{} ({} → {})".format(
+        return '{} ({} → {})'.format(
             str(self.operator.value),
-            ", ".join([str(value) for value in self.input_types.all()]),
+            ', '.join([str(value) for value in self.input_types.all()]),
             str(self.output_type))
 
 

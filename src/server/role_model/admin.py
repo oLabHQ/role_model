@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from common import admin_change_url
 
 from role_model.models import (
     Deliverable,
@@ -17,10 +18,7 @@ class OwnershipAdminMixin:
         from django.urls import reverse
         return format_html(
             "<a href='{0}'>{1}</a>",
-            reverse('admin:{}_{}_change'.format(
-                instance.organization._meta.app_label.lower(),
-                instance.organization._meta.model_name.lower()
-            ), args=(instance.organization.id,)),
+            admin_change_url(instance.organization),
             str(instance.organization) or instance.organization.id)
 
     organization_link.allow_tags = True
@@ -35,10 +33,48 @@ class GroupAdmin(OwnershipAdminMixin, admin.ModelAdmin):
 
 
 class ResponsibilityAdmin(OwnershipAdminMixin, admin.ModelAdmin):
-    list_display = ('operator', 'prose', 'organization_link', 'id',
-                    'created')
+    list_display = ('operator', 'input_types_table', 'output_type_link',
+                    'prose', 'organization_link', 'id', 'created')
     list_display_links = ('operator', 'id')
     search_fields = ['organization__name']
+
+    def output_type_link(self, instance):
+        html_args = []
+        html = []
+        html.append('<a href="{}">{}</a>')
+        html_args.append(admin_change_url(instance.output_type))
+        html_args.append(str(instance.output_type))
+
+        return format_html("\n".join(html), *html_args)
+
+    output_type_link.allow_tags = True
+    output_type_link.short_description = "output type"
+
+    def input_types_table(self, instance):
+        input_types = list(instance.input_types.all())
+        html_args = []
+        html = []
+        if len(input_types) > 1:
+            html.append('<table>')
+            for input_type in input_types:
+                html.append('<tr>')
+                html.append('<td>')
+                html.append('<a href="{}">{}</a>')
+                html_args.append(admin_change_url(input_type))
+                html_args.append(str(input_type))
+                html.append('</td>')
+                html.append('</tr>')
+            html.append('</table>')
+        elif input_types:
+            input_type = input_types.pop()
+            html.append('<a href="{}">{}</a>')
+            html_args.append(admin_change_url(input_type))
+            html_args.append(str(input_type))
+
+        return format_html("\n".join(html), *html_args)
+
+    input_types_table.allow_tags = True
+    input_types_table.short_description = "input types"
 
 
 class RoleAdmin(OwnershipAdminMixin, admin.ModelAdmin):

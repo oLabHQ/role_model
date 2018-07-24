@@ -45,7 +45,7 @@ class HistoryManager(models.Manager):
         return History.objects.create(
             instance=instance,
             serialized_data=serialized_data,
-            delta=json.loads(delta))
+            delta=json.loads(delta) if delta else None)
 
 
 class History(TimeStampedModel):

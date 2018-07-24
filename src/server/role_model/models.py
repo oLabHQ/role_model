@@ -54,6 +54,19 @@ class Facet(NameSlugTimeStampedUUIDModel):
                                     related_name='facets', on_delete='CASCADE')
 
 
+class ContentTypeManager(models.Manager):
+    """
+    Set default select_related.
+    Reduces 90% of queries on the Responsibility Admin Change Form page.
+    """
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            'deliverable',
+            'group',
+            'facet',
+            'format')
+
+
 class ContentType(TimeStampedUUIDModel):
     """
     A content produced by an employee in the course of the company producing
@@ -72,6 +85,11 @@ class ContentType(TimeStampedUUIDModel):
     group = models.ForeignKey('Group', on_delete='CASCADE')
     facet = models.ForeignKey('Facet', on_delete='CASCADE')
     format = models.ForeignKey('Format', on_delete='CASCADE')
+
+    objects = ContentTypeManager()
+
+    class Meta:
+        base_manager_name = 'objects'
 
     def __str__(self):
         return ":".join([str(self.deliverable), str(self.group),
@@ -125,6 +143,15 @@ class Assignment(TimeStampedUUIDModel):
     status = Status.Field(default=Status.formal)
 
 
+class RoleManager(models.Manager):
+    """
+    Set default select_related.
+    """
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            'group').prefetch_related('responsibilities', 'users')
+
+
 class Role(NameSlugTimeStampedUUIDModel):
     responsibilities = models.ManyToManyField('Responsibility',
                                               # through='Assignment'
@@ -133,6 +160,11 @@ class Role(NameSlugTimeStampedUUIDModel):
     group = models.ForeignKey('role_model.Group',
                               related_name='roles',
                               on_delete='CASCADE')
+
+    objects = RoleManager()
+
+    class Meta:
+        base_manager_name = 'objects'
 
     @property
     def organization(self):
@@ -143,6 +175,29 @@ class Role(NameSlugTimeStampedUUIDModel):
             super().__str__(), "\n  ".join([
                 str(responsibility)
                 for responsibility in self.responsibilities.all()]))
+
+
+class ResponsibilityManager(models.Manager):
+    """
+    Set default select_related.
+    Really speeds up pages where we generate a description for a list of
+    responsibilities.
+    """
+    def get_queryset(self):
+        return super().get_queryset() \
+            .select_related(
+                'organization',
+                'output_type',
+                'output_type__deliverable',
+                'output_type__group',
+                'output_type__facet',
+                'output_type__format') \
+            .prefetch_related(
+                'input_types',
+                'input_types__deliverable',
+                'input_types__group',
+                'input_types__facet',
+                'input_types__format')
 
 
 class Responsibility(Ownership, TimeStampedUUIDModel):
@@ -178,8 +233,11 @@ class Responsibility(Ownership, TimeStampedUUIDModel):
                                     related_name='inputs',
                                     on_delete='CASCADE')
 
+    objects = ResponsibilityManager()
+
     class Meta:
-        verbose_name_plural = "responsibilities"
+        verbose_name_plural = 'responsibilities'
+        base_manager_name = 'objects'
 
     def clean(self):
         valid_number_of_input_types = Responsibility.OPERATOR_TYPE_SIGNATURE[

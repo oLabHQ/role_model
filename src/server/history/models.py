@@ -33,12 +33,12 @@ class HistoryManager(models.Manager):
         delta = diff(
             serialized_data,
             previous_history.serialized_data,
-            syntax='symmetric') if previous_history else None
+            syntax='symmetric', dump=True) if previous_history else None
 
         return History.objects.create(
             instance=instance,
             serialized_data=serialized_data,
-            delta=delta)
+            delta=json.loads(delta))
 
 
 class History(TimeStampedModel):

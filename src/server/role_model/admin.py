@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from common import admin_change_url, admin_change_link
+from common import admin_change_link
 
 from role_model.models import (
     Deliverable,

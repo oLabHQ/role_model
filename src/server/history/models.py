@@ -67,7 +67,7 @@ class History(TimeStampedModel):
         changes = []
         if self.delta and 'fields' in self.delta:
             for field, values in self.delta['fields'].items():
-                values = [textwrap.shorten(str(value), width=32)
+                values = [textwrap.shorten(str(value), width=256)
                           for value in values]
                 changes.append((field, values))
 

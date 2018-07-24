@@ -15,6 +15,9 @@ make run
 
 3. Build the business logic.
     a. Ensure test coverage complete.
+    b. Have a think about a file format for sharing and loading organization
+       roles and responsibilities templates. E.g. a typical one for a software
+       start up.
 
 4. Add appropriate logging.
 

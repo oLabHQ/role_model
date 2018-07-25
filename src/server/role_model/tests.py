@@ -6,6 +6,7 @@ from django.urls import reverse
 import schema
 
 from role_model.models import (
+    # Assignment,
     ContentType,
     Deliverable,
     Facet,
@@ -183,8 +184,10 @@ class RoleModelTestCase(TestCase):
             operator=Responsibility.Operator.transform,
             output_type=get_content_type("Product", "Build Ticket")
         )
-        responsibility.input_types.set([
-            get_content_type("Product", "Requirements Document")])
+        responsibility.input_types.through.objects.create(
+            content_type=get_content_type("Product", "Requirements Document"),
+            responsibility=responsibility
+        )
 
         print(responsibility.prose())
         # print(responsibility.prose())
@@ -193,16 +196,18 @@ class RoleModelTestCase(TestCase):
             name="developer",
             group=self.group_product)
 
-        developer.responsibilities.add(responsibility)
+        # developer.responsibilities.add(responsibility)
 
         responsibility = Responsibility.objects.create(
             organization=self.organization,
             operator=Responsibility.Operator.transform,
             output_type=get_content_type("Product", "Test Product")
         )
-        responsibility.input_types.set([
-            get_content_type("Product", "Build Ticket")])
+        responsibility.input_types.through.objects.create(
+            content_type=get_content_type("Product", "Build Ticket"),
+            responsibility=responsibility
+        )
 
         print(responsibility.prose())
-        developer.responsibilities.add(responsibility)
+        # developer.responsibilities.add(responsibility)
         print(developer)

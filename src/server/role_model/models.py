@@ -3,8 +3,11 @@ from enum import auto
 from django.conf import settings
 from django.db import models
 
+from aldjemy.meta import AldjemyMeta
+
 from common.models import (
-    Choices, States, TimeStampedUUIDModel, NameSlugTimeStampedUUIDModel)
+    Choices, States, TimeStampedUUIDModel, NameSlugTimeStampedUUIDModel,
+    UUIDModel)
 from common.language import join_and
 
 
@@ -19,19 +22,20 @@ class Ownership(models.Model):
         abstract = True
 
 
-class Deliverable(Ownership, NameSlugTimeStampedUUIDModel):
+class Deliverable(Ownership, NameSlugTimeStampedUUIDModel,
+                  metaclass=AldjemyMeta):
     """
     The thing a group of employees are producing together.
     """
 
 
-class Group(Ownership, NameSlugTimeStampedUUIDModel):
+class Group(Ownership, NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
     """
     Each role belong to a group.
     """
 
 
-class Format(NameSlugTimeStampedUUIDModel):
+class Format(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
     """
     A format of an output of a responsibility.
     It can be a document, code, questions, even usage generating analytics
@@ -46,7 +50,7 @@ class Format(NameSlugTimeStampedUUIDModel):
         return self.deliverable.organization
 
 
-class Facet(NameSlugTimeStampedUUIDModel):
+class Facet(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
     """
     One face of the product, or product's data.
     For example, a product may have the following facets:
@@ -76,7 +80,7 @@ class ContentTypeManager(models.Manager):
             'format')
 
 
-class ContentType(TimeStampedUUIDModel):
+class ContentType(TimeStampedUUIDModel, metaclass=AldjemyMeta):
     """
     A content produced by an employee in the course of the company producing
     a product.
@@ -122,7 +126,7 @@ class ContentType(TimeStampedUUIDModel):
             facet=str(self.facet).lower())
 
 
-class Assignment(TimeStampedUUIDModel):
+class Assignment(TimeStampedUUIDModel, metaclass=AldjemyMeta):
     class Status(States):
         """
         Describes how the responsibility was assigned.
@@ -165,9 +169,9 @@ class RoleManager(models.Manager):
             'group').prefetch_related('responsibilities', 'users')
 
 
-class Role(NameSlugTimeStampedUUIDModel):
+class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
     responsibilities = models.ManyToManyField('Responsibility',
-                                              # through='Assignment'
+                                              through='Assignment'
                                               )
     users = models.ManyToManyField(settings.AUTH_USER_MODEL)
     group = models.ForeignKey('role_model.Group',
@@ -213,7 +217,13 @@ class ResponsibilityManager(models.Manager):
                 'input_types__format')
 
 
-class Responsibility(Ownership, TimeStampedUUIDModel):
+class ResponsibilityInputType(UUIDModel, metaclass=AldjemyMeta):
+    content_type = models.ForeignKey('ContentType', on_delete='CASCADE')
+    responsibility = models.ForeignKey('Responsibility',
+                                       on_delete='CASCADE')
+
+
+class Responsibility(Ownership, TimeStampedUUIDModel, metaclass=AldjemyMeta):
     class Operator(Choices):
         transform = auto()
         reduce = auto()
@@ -241,7 +251,8 @@ class Responsibility(Ownership, TimeStampedUUIDModel):
 
     operator = Operator.Field()
     input_types = models.ManyToManyField('role_model.ContentType',
-                                         related_name='outputs')
+                                         related_name='outputs',
+                                         through='ResponsibilityInputType')
     output_type = models.ForeignKey('role_model.ContentType',
                                     related_name='inputs',
                                     on_delete='CASCADE')
@@ -288,6 +299,8 @@ class Responsibility(Ownership, TimeStampedUUIDModel):
             str(self.operator.value),
             ', '.join([str(value) for value in self.input_types.all()]),
             str(self.output_type))
+
+
 
 
 # Copying classes to module level to ensure availability for migration files.

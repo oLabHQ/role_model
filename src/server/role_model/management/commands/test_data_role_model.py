@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from role_model.models import (
-    # Assignment,
+    Assignment,
     ContentType,
     Deliverable,
     Facet,
@@ -42,6 +42,9 @@ class Command(BaseCommand):
         ('A/B Experiment Review', 'An A/B Experiment Review'),
         ('A/B Experiment Setup', 'An A/B Experiment Setup'),
         ('A/B Experiment Requirements', 'An A/B Experiment Requirements'),
+        ('Directive', 'An instruction to prioritise implementation of a '
+                      'feature'),
+        ('Response', 'A response to a customer'),
     ]
 
     GROUPS = [
@@ -63,10 +66,12 @@ class Command(BaseCommand):
         ('User', 'User Interface', 'Use'),
         ('User', 'User Interface', 'Query'),
         ('User', 'User Interface', 'Use Pattern'),
+        ('Support', 'User Interface', 'Response'),
         ('Support', 'User Interface', 'Bug Report'),
         ('Support', 'User Interface', 'Feature Request'),
         ('Product', 'User Interface', 'Concept'),
         ('Product', 'User Interface', 'Requirements Document'),
+        ('Product', 'User Interface', 'Directive'),
         ('Product', 'User Interface', 'Build Ticket'),
         ('Product', 'User Interface', 'Test Product'),
         ('Product', 'User Interface', 'Test'),
@@ -84,13 +89,14 @@ class Command(BaseCommand):
         ('Product', 'Support Interface', 'Requirements Document'),
         ('Product', 'Support Interface', 'Build Ticket'),
         ('Product', 'Support Interface', 'Test Product'),
+        ('Product', 'Support Interface', 'Test'),
         ('Product', 'Support Interface', 'Deployed Product'),
     ]
 
     ROLES = [
         ('Marketing', 'Growth Hacker'),
         ('Marketing', 'Chief Marketing Officer'),
-        ('Operations', 'Chief Operations Officer'),
+        ('Operations', 'Chief Operating Officer'),
         ('Product', 'Software Engineer'),
         ('Product', 'Test Engineer'),
         ('Product', 'UX Designer'),
@@ -106,6 +112,28 @@ class Command(BaseCommand):
             ('User', 'User Interface', 'Query'), [
                 ('User', 'User Interface', 'Use')
             ]),
+        (Operator.filter, ('Customer Support',),
+            ('Support', 'Support Interface', 'Query'), [
+                ('Support', 'Support Interface', 'Use')
+            ]),
+        (Operator.transform, ('Customer',),
+            ('User', 'User Interface', 'Use'), [
+                ('Product', 'Support Interface', 'Deployed Product'),
+            ]),
+        (Operator.transform, ('Customer Support',),
+            ('Support', 'Support Interface', 'Use'), [
+                ('Product', 'Support Interface', 'Deployed Product'),
+            ]),
+        (Operator.transform, ('Customer Support',),
+            ('Support', 'User Interface', 'Response'), [
+                ('User', 'User Interface', 'Query'),
+                ('Product', 'Support Interface', 'Deployed Product'),
+            ]),
+        (Operator.combine, ('Customer Support',),
+            ('Support', 'User Interface', 'Response'), [
+                ('User', 'User Interface', 'Query'),
+                ('Product', 'Support Interface', 'Deployed Product'),
+            ]),
         (Operator.reduce, ('Customer Support',),
             ('User', 'User Interface', 'Use Pattern'), [
                 ('User', 'User Interface', 'Query')
@@ -113,6 +141,18 @@ class Command(BaseCommand):
         (Operator.reduce, ('Customer Support',),
             ('Support', 'User Interface', 'Bug Report'), [
                 ('User', 'User Interface', 'Query')
+            ]),
+        (Operator.reduce, ('Chief Operating Officer',),
+            ('Support', 'Support Interface', 'Use Pattern'), [
+                ('Support', 'Support Interface', 'Query')
+            ]),
+        (Operator.reduce, ('Chief Operating Officer',),
+            ('Operations', 'Support Interface', 'Bug Report'), [
+                ('Support', 'Support Interface', 'Query')
+            ]),
+        (Operator.reduce, ('Chief Operating Officer',),
+            ('Operations', 'Support Interface', 'Feature Request'), [
+                ('Support', 'Support Interface', 'Query')
             ]),
         (Operator.reduce, ('Customer Support',),
             ('Support', 'User Interface', 'Feature Request'), [
@@ -122,10 +162,18 @@ class Command(BaseCommand):
             ('User', 'User Interface', 'Use Pattern'), [
                 ('User', 'User Interface', 'Use')
             ]),
+        (Operator.reduce, ('Chief Operating Officer',),
+            ('Support', 'Support Interface', 'Use Pattern'), [
+                ('Support', 'Support Interface', 'Use')
+            ]),
         (Operator.combine, ('Product Owner',),
             ('Product', 'User Interface', 'Concept'), [
                 ('Support', 'User Interface', 'Feature Request'),
                 ('User', 'User Interface', 'Use Pattern')
+            ]),
+        (Operator.transform, ('Product Owner',),
+            ('Product', 'User Interface', 'Directive'), [
+                ('Product', 'User Interface', 'Requirements Document')
             ]),
         (Operator.transform, ('UX Designer',),
             ('Product', 'User Interface', 'Requirements Document'), [
@@ -133,7 +181,15 @@ class Command(BaseCommand):
             ]),
         (Operator.transform, ('Chief Technology Officer',),
             ('Product', 'User Interface', 'Build Ticket'), [
+                ('Product', 'User Interface', 'Directive')
+            ]),
+        (Operator.transform, ('Chief Technology Officer',),
+            ('Product', 'User Interface', 'Build Ticket'), [
                 ('Product', 'User Interface', 'Requirements Document')
+            ]),
+        (Operator.transform, ('Chief Technology Officer',),
+            ('Product', 'Support Interface', 'Build Ticket'), [
+                ('Product', 'Support Interface', 'Requirements Document')
             ]),
         (Operator.sort, ('Product Owner',),
             ('Support', 'User Interface', 'Bug Report'), [
@@ -147,18 +203,70 @@ class Command(BaseCommand):
             ('Product', 'User Interface', 'Test Product'), [
                 ('Product', 'User Interface', 'Build Ticket')
             ]),
+        (Operator.transform, ('Software Engineer',),
+            ('Product', 'Support Interface', 'Test Product'), [
+                ('Product', 'Support Interface', 'Build Ticket')
+            ]),
         (Operator.transform, ('Test Engineer',),
             ('Product', 'User Interface', 'Test'), [
                 ('Product', 'User Interface', 'Test Product')
+            ]),
+        (Operator.transform, ('Test Engineer',),
+            ('Product', 'Support Interface', 'Test'), [
+                ('Product', 'Support Interface', 'Test Product')
             ]),
         (Operator.filter, ('Test Engineer',),
             ('Product', 'User Interface', 'Build Ticket'), [
                 ('Product', 'User Interface', 'Test')
             ]),
+        (Operator.filter, ('Test Engineer',),
+            ('Product', 'Support Interface', 'Build Ticket'), [
+                ('Product', 'Support Interface', 'Test')
+            ]),
         (Operator.combine, ('Test Engineer',),
             ('Product', 'User Interface', 'Deployed Product'), [
                 ('Product', 'User Interface', 'Test'),
                 ('Product', 'User Interface', 'Test Product'),
+            ]),
+        (Operator.combine, ('Test Engineer',),
+            ('Product', 'Support Interface', 'Deployed Product'), [
+                ('Product', 'Support Interface', 'Test'),
+                ('Product', 'Support Interface', 'Test Product'),
+            ]),
+        (Operator.combine, ('Growth Hacker',),
+            ('Marketing', 'User Interface', 'A/B Experiment Proposal'), [
+                ('Support', 'User Interface', 'Feature Request'),
+                ('User', 'User Interface', 'Use')
+            ]),
+        (Operator.transform, ('Chief Marketing Officer',),
+            ('Marketing', 'User Interface', 'A/B Experiment Review'), [
+                ('Marketing', 'User Interface', 'A/B Experiment Proposal')
+            ]),
+        (Operator.transform, ('Growth Hacker',),
+            ('Marketing', 'User Interface', 'A/B Experiment Setup'), [
+                ('Marketing', 'User Interface', 'A/B Experiment Review')
+            ]),
+        (Operator.transform, ('Growth Hacker',),
+            ('Marketing', 'User Interface', 'A/B Experiment Requirements'), [
+                ('Marketing', 'User Interface', 'A/B Experiment Setup')
+            ]),
+        (Operator.transform, ('Chief Technology Officer',),
+            ('Product', 'User Interface', 'Requirements Document'), [
+                ('Marketing', 'User Interface', 'A/B Experiment Requirements')
+            ]),
+        (Operator.transform, ('Chief Technology Officer',),
+            ('Product', 'Support Interface', 'Build Ticket'), [
+                ('Operations', 'Support Interface', 'Bug Report')
+            ]),
+        (Operator.combine, ('Systems Analyst',),
+            ('Product', 'Support Interface', 'Concept'), [
+                ('Operations', 'Support Interface', 'Feature Request'),
+                ('Operations', 'Support Interface', 'Bug Report'),
+            ]),
+        (Operator.combine, ('Systems Analyst',),
+            ('Product', 'Support Interface', 'Requirements Document'), [
+                ('Product', 'Support Interface', 'Concept'),
+                ('Support', 'Support Interface', 'Use Pattern'),
             ]),
     ]
 
@@ -228,12 +336,18 @@ class Command(BaseCommand):
                         operator=operator,
                         organization=self.organization)
                 for name in roles:
-                    self.roles[name].responsibilities.add(
-                        self.responsibilities[roles, output_type])
+                    Assignment.objects.create(
+                        role=self.roles[name],
+                        responsibility=self.responsibilities[roles, output_type]
+                    )
 
                 for input_type in input_types:
-                    self.responsibilities[roles, output_type].input_types \
-                        .add(self.content_types[input_type])
+                    self.responsibilities[roles, output_type]. \
+                        input_types.through.objects.create(
+                            content_type=self.content_types[input_type],
+                            responsibility=
+                                self.responsibilities[roles, output_type]
+                        )
 
     def handle(self, *args, **options):
         print('Setting up test data.')

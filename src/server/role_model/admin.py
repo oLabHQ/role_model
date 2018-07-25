@@ -1,5 +1,9 @@
 from django.contrib import admin
+from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.safestring import SafeText
+
+
 from common import admin_change_link
 
 from role_model.models import (
@@ -133,6 +137,21 @@ class DeliverableAdmin(OwnershipAdminMixin, admin.ModelAdmin):
     list_display = ('name', 'organization_link', 'id',
                     'created')
     list_display_links = ('name', 'id')
+    fieldsets = (
+        (None, {'fields': ('name', 'organization', 'organization_chart')}),
+    )
+    readonly_fields = ['created', 'organization_chart']
+
+    def organization_chart(self, instance):
+        return SafeText(
+            format_html("""
+<iframe src="{}" width="800px" height="600px"></iframe>""",
+                reverse('deliverable_organization_chart',
+                        kwargs={
+                            'deliverable_id': str(instance.id)
+                        })))
+
+    organization_chart.allow_tags = True
 
 
 class ContentTypeAdmin(

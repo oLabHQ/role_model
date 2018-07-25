@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 import sys
 
+from sqlalchemy.dialects.postgresql import UUID
+
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -34,6 +37,11 @@ ALLOWED_HOSTS = []
 AUTH_USER_MODEL = 'crm.User'
 ROLE_MODEL_ORGANIZATION_MODEL = 'crm.Organization'
 
+# ALDJEMY
+ALDJEMY_DATA_TYPES = {
+    'UUIDField': lambda field: UUID()
+}
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -54,6 +62,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'aldjemy',
     'history',
     'debug_toolbar',
 ]
@@ -173,3 +182,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = 'static'

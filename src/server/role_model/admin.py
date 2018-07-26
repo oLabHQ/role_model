@@ -190,11 +190,32 @@ class ContentTypeAdmin(
     format_link.short_description = "format"
 
 
+class AssignmentAdmin(OwnershipAdminMixin, admin.ModelAdmin):
+    list_display = ('id', 'role_link', 'responsibility_link',
+                    'organization_link', 'status',  'created')
+    list_display_links = ('id',)
+
+    def role_link(self, instance):
+        return admin_change_link(instance.role, label=lambda role: role.name)
+
+    role_link.allow_tags = True
+    role_link.short_description = "role"
+    role_link.admin_order_field = 'role__name'
+
+    def responsibility_link(self, instance):
+        return admin_change_link(instance.responsibility)
+
+    responsibility_link.allow_tags = True
+    responsibility_link.short_description = "responsibility"
+    responsibility_link.admin_order_field = 'responsibility_id'
+
+
+
 admin.site.register(Deliverable, DeliverableAdmin)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(Format, FormatAdmin)
 admin.site.register(Facet, FacetAdmin)
 admin.site.register(ContentType, ContentTypeAdmin)
-admin.site.register(Assignment, admin.ModelAdmin)
+admin.site.register(Assignment, AssignmentAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Responsibility, ResponsibilityAdmin)

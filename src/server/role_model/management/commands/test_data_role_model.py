@@ -27,6 +27,7 @@ class Command(BaseCommand):
 
     FORMATS = [
         ('Concept', 'Concept of new features'),
+        ('Proposal', 'Proposal of new features'),
         ('Requirements Document', 'Specific product requirements'),
         ('Build Ticket', 'Ticket containing approach of implementation'),
         ('Test Product', 'Implemented software deployed to test server'),
@@ -70,6 +71,7 @@ class Command(BaseCommand):
         ('Support', 'User Interface', 'Bug Report'),
         ('Support', 'User Interface', 'Feature Request'),
         ('Product', 'User Interface', 'Concept'),
+        ('Product', 'User Interface', 'Proposal'),
         ('Product', 'User Interface', 'Requirements Document'),
         ('Product', 'User Interface', 'Directive'),
         ('Product', 'User Interface', 'Build Ticket'),
@@ -83,6 +85,7 @@ class Command(BaseCommand):
         ('Support', 'Support Interface', 'Use'),
         ('Support', 'Support Interface', 'Query'),
         ('Support', 'Support Interface', 'Use Pattern'),
+        ('Product', 'Support Interface', 'Proposal'),
         ('Operations', 'Support Interface', 'Bug Report'),
         ('Operations', 'Support Interface', 'Feature Request'),
         ('Product', 'Support Interface', 'Concept'),
@@ -198,6 +201,10 @@ class Command(BaseCommand):
         (Operator.transform, ('Chief Technology Officer',),
             ('Product', 'User Interface', 'Build Ticket'), [
                 ('Support', 'User Interface', 'Bug Report')
+            ]),
+        (Operator.transform, ('Software Engineer',),
+            ('Product', 'Support Interface', 'Proposal'), [
+                ('Operations', 'Support Interface', 'Bug Report')
             ]),
         (Operator.transform, ('Software Engineer',),
             ('Product', 'User Interface', 'Test Product'), [

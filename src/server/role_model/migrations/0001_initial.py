@@ -14,8 +14,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('crm', '0001_initial'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
@@ -27,9 +27,6 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('status', django_fsm.FSMField(choices=[(role_model.models.Status('formal'), 'formal'), (role_model.models.Status('ad_hoc'), 'ad_hoc'), (role_model.models.Status('adjunct'), 'adjunct')], default=role_model.models.Status('formal'), max_length=50)),
             ],
-            options={
-                'abstract': False,
-            },
         ),
         migrations.CreateModel(
             name='ContentType',
@@ -50,7 +47,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=64)),
                 ('slug', django_extensions.db.fields.AutoSlugField(blank=True, editable=False, populate_from=['name'])),
-                ('organization', models.ForeignKey(on_delete='CASCADE', to='crm.Organization')),
+                ('organization', models.ForeignKey(on_delete='CASCADE', related_name='deliverables', to='crm.Organization')),
             ],
             options={
                 'abstract': False,
@@ -93,10 +90,10 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=64)),
                 ('slug', django_extensions.db.fields.AutoSlugField(blank=True, editable=False, populate_from=['name'])),
-                ('organization', models.ForeignKey(on_delete='CASCADE', to='crm.Organization')),
+                ('organization', models.ForeignKey(on_delete='CASCADE', related_name='groups', to='crm.Organization')),
             ],
             options={
-                'abstract': False,
+                'base_manager_name': 'objects',
             },
         ),
         migrations.CreateModel(
@@ -147,7 +144,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='responsibility',
             name='organization',
-            field=models.ForeignKey(on_delete='CASCADE', to='crm.Organization'),
+            field=models.ForeignKey(on_delete='CASCADE', related_name='responsibilitys', to='crm.Organization'),
         ),
         migrations.AddField(
             model_name='responsibility',
@@ -183,5 +180,9 @@ class Migration(migrations.Migration):
             model_name='assignment',
             name='role',
             field=models.ForeignKey(on_delete='CASCADE', to='role_model.Role'),
+        ),
+        migrations.AlterUniqueTogether(
+            name='assignment',
+            unique_together={('role', 'responsibility')},
         ),
     ]

@@ -9,8 +9,8 @@ def admin_change_url(instance):
     ), args=(instance.id,))
 
 
-def admin_change_link(instance):
+def admin_change_link(instance, label=str):
     return format_html(
         "<a href='{0}'>{1}</a>",
         admin_change_url(instance),
-        str(instance) or instance.id)
+        label(instance) or str(instance.id))

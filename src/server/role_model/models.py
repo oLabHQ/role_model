@@ -153,6 +153,28 @@ class ContentType(TimeStampedUUIDModel, metaclass=AldjemyMeta):
             facet=str(self.facet).lower())
 
 
+class AssignmentManager(models.Manager):
+    """
+    Set default select_related.
+    """
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            'role',
+            'responsibility',
+            'responsibility__organization',
+            'responsibility__output_type',
+            'responsibility__output_type__deliverable',
+            'responsibility__output_type__group',
+            'responsibility__output_type__facet',
+            'responsibility__output_type__format') \
+            .prefetch_related(
+                'responsibility__input_types',
+                'responsibility__input_types__deliverable',
+                'responsibility__input_types__group',
+                'responsibility__input_types__facet',
+                'responsibility__input_types__format')
+
+
 class Assignment(TimeStampedUUIDModel, metaclass=AldjemyMeta):
     class Status(States):
         """
@@ -185,6 +207,15 @@ class Assignment(TimeStampedUUIDModel, metaclass=AldjemyMeta):
     responsibility = models.ForeignKey('Responsibility',
                                        on_delete='CASCADE')
     status = Status.Field(default=Status.formal)
+
+    objects = AssignmentManager()
+
+    class Meta:
+        unique_together = [('role', 'responsibility')]
+
+    @property
+    def organization(self):
+        return self.responsibility.organization
 
 
 class RoleManager(models.Manager):
@@ -234,7 +265,6 @@ class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
         OtherAssignment = aliased(Assignment.sa)
         OtherInputType = aliased(ResponsibilityInputType.sa)
         InputType = aliased(ContentType.sa)
-        OutputType = aliased(ContentType.sa)
         return (RoleAssignment
             .query(RoleAssignment.id,
                    OtherAssignment.id,
@@ -249,16 +279,15 @@ class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
             .join(InputType,
                   RoleInputType.content_type_id ==
                   InputType.id)
-            .join(OtherResponsibility,
+            .outerjoin(OtherResponsibility,
                   OtherResponsibility.output_type_id ==
                   InputType.id)
-            .join(OtherAssignment,
+            .outerjoin(OtherAssignment,
                   OtherAssignment.responsibility_id ==
                   OtherResponsibility.id)
             .filter(
                 RoleAssignment.role_id == self.id,
-                #OtherAssignment.role_id != self.id
-            ).distinct(RoleAssignment.id))
+            ).distinct(OtherAssignment.role_id, InputType.id))
 
     def targets(self):
         """
@@ -273,7 +302,6 @@ class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
         OtherResponsibility = aliased(Responsibility.sa)
         OtherAssignment = aliased(Assignment.sa)
         OtherInputType = aliased(ResponsibilityInputType.sa)
-        InputType = aliased(ContentType.sa)
         OutputType = aliased(ContentType.sa)
         return (RoleAssignment
             .query(RoleAssignment.id,
@@ -286,19 +314,18 @@ class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
             .join(OutputType,
                   RoleResponsibility.output_type_id ==
                   OutputType.id)
-            .join(OtherInputType,
+            .outerjoin(OtherInputType,
                   OtherInputType.content_type_id ==
                   OutputType.id)
-            .join(OtherResponsibility,
+            .outerjoin(OtherResponsibility,
                   OtherInputType.responsibility_id ==
                   OtherResponsibility.id)
-            .join(OtherAssignment,
+            .outerjoin(OtherAssignment,
                   OtherAssignment.responsibility_id ==
                   OtherResponsibility.id)
             .filter(
                 RoleAssignment.role_id == self.id,
-                OtherAssignment.role_id != self.id
-            ).distinct(RoleAssignment.id))
+            ).distinct(OtherAssignment.role_id, OutputType.id))
 
 
 class ResponsibilityManager(models.Manager):

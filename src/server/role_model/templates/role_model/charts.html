@@ -14,38 +14,64 @@
   <script>
   var cy = window.cy = cytoscape({
     container: document.getElementById('cy'),
-
+    layout: {
+      name: 'circle',
+      padding: 20
+    },
     boxSelectionEnabled: false,
     autounselectify: true,
     style: [
       {
         selector: 'node',
         css: {
+          'shape': 'roundrectangle',
+          'width': 'data(width)',
+          'padding': '5',
           'content': 'data(name)',
-          'width': '200px',
-          'height': '60px',
           'text-valign': 'center',
-          'text-halign': 'center',
-          'background-color': '#aaa'
+          'text-outline-width': 2,
+          'text-outline-color': 'data(color)',
+          'background-color': 'data(color)',
+          'color': '#fff',
+          'font-size': 24,
+          'font-family': 'monaco'
         }
       },
       {
         selector: '$node > node',
         css: {
+          'text-outline-color': 'data(color)',
+          'text-outline-width': 4,
           'padding-top': '10px',
           'padding-left': '10px',
           'padding-bottom': '10px',
           'padding-right': '10px',
           'text-valign': 'top',
           'text-halign': 'center',
-          'background-color': '#eee'
+          'background-color': 'data(color)',
+          'background-opacity': '0.1',
+          'font-size': 24,
         }
       },
       {
         selector: 'edge',
         css: {
-          // 'content': 'data(name)',
-          'target-arrow-shape': 'triangle'
+          'content': 'data(name)',
+          'target-arrow-shape': 'triangle',
+          'curve-style': 'bezier',
+          'opacity': 0.9,
+          'width': '5',
+          'arrow-scale': 1.5,
+          'target-arrow-shape': 'triangle',
+          // 'source-arrow-shape': 'circle',
+          'line-color': '#666',
+          'color': 'white',
+          'text-outline-width': 6,
+          'text-outline-color': 'black',
+          'font-size': 32,
+          // 'source-arrow-color': 'data(source_color)',
+          'target-arrow-color': 'data(source_color)',
+          "edge-text-rotation": "autorotate"
         }
       },
       {

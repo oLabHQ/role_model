@@ -12,6 +12,15 @@ from role_model.models import (
     ResponsibilityInputType)
 
 
+def chart_node(id, **kwargs):
+    return {
+        'data': {
+            k: str(v)
+                for k, v in dict(id=id, **kwargs).items() if v
+        }
+    }
+
+
 def deliverable_organization_chart(request, deliverable_id,
                                    template='role_model/charts.html'):
     """
@@ -26,101 +35,130 @@ def deliverable_organization_chart(request, deliverable_id,
     deliverable = get_object_or_404(Deliverable, pk=deliverable_id)
     nodes = []
     edges = []
+    content_types = {}
+    colors = [
+        "#6FB1FC",
+        "#EDA1ED",
+        "#86B342",
+        "#F5A45D",
+        "#6456B7",
+        "#FF007C"
+    ]
+    connections = {}
+
+    group_colors = {}
+    role_colors = {}
+
+    for group in deliverable.organization.groups.all():
+        color = colors[len(group_colors) % len(colors)]
+        group_colors[str(group.id)] = color
+
+        for role in group.roles.all():
+            role_colors[str(role.id)] = color
+
 
     for group in Group.objects.filter(
-            roles__responsibilities__input_types__deliverable=deliverable):
+            roles__responsibilities__input_types__deliverable=deliverable) \
+            .distinct():
         nodes.append({
             'data': {
                 'id': str(group.id),
-                'name': group.name
+                'name': group.name,
+                'width': '100',
+                'color': group_colors[str(group.id)]
             }
         })
 
     for role in Role.objects.filter(
-            responsibilities__input_types__deliverable=deliverable):
-        nodes.append({
-            'data': {
-                'id': str(role.id),
-                'name': role.name,
-                'parent': str(role.group.id)
-            }
-        })
+            responsibilities__input_types__deliverable=deliverable).distinct():
+        color = role_colors[str(role.id)]
+        nodes.append(chart_node(
+            id=role.id,
+            name=role.name,
+            width=len(role.name) * 16,
+            color=color,
+            parent=role.group.id
+        ))
+        sources = role.sources().all()
 
-        from sqlalchemy.orm import aliased
-        RoleAssignment = aliased(Assignment.sa)
-        RoleResponsibility = aliased(Responsibility.sa)
-        RoleInputType = aliased(ResponsibilityInputType.sa)
-        OtherResponsibility = aliased(Responsibility.sa)
-        OtherAssignment = aliased(Assignment.sa)
-        OtherInputType = aliased(ResponsibilityInputType.sa)
-        InputType = aliased(ContentType.sa)
-        OutputType = aliased(ContentType.sa)
+        inserted = {}
 
-        sources = (RoleAssignment
-            .query(RoleAssignment.id,
-                   OtherAssignment.role_id)
-            .join(RoleResponsibility,
-                  RoleResponsibility.id ==
-                  RoleAssignment.responsibility_id)
-            .join(RoleInputType,
-                  RoleInputType.responsibility_id ==
-                  RoleResponsibility.id)
-            .join(InputType,
-                  RoleInputType.content_type_id ==
-                  InputType.id)
-            .join(OtherResponsibility,
-                  OtherResponsibility.output_type_id ==
-                  InputType.id)
-            .join(OtherAssignment,
-                  OtherAssignment.responsibility_id ==
-                  OtherResponsibility.id)
-            .filter(
-                RoleAssignment.role_id == role.id,
-                OtherAssignment.role_id != role.id
-            )
-        ).all()
+        for assignment_id, other_assignment_id, source_id, content_type_id \
+                in sources:
+            content_type = ContentType.objects.id(id=str(content_type_id))
 
-        for assignment_id, source_id in sources:
             edges.append({
                 'data': {
-                    'id': "-".join([str(assignment_id), "from"]),
+                    'id': str(role.id) + str(source_id) + str(content_type_id),
+                    'name': content_type.short_name,
                     'source': str(source_id),
                     'target': str(role.id),
+                    'source_color': None,
+                    'target_color': color,
+                    'classes': 'autorotate'
                 }
             })
 
-        targets = (RoleAssignment
-            .query(RoleAssignment.id,
-                   OtherAssignment.role_id)
-            .join(RoleResponsibility,
-                  RoleResponsibility.id ==
-                  RoleAssignment.responsibility_id)
-            .join(OutputType,
-                  RoleResponsibility.output_type_id ==
-                  OutputType.id)
-            .join(OtherInputType,
-                  OtherInputType.content_type_id ==
-                  OutputType.id)
-            .join(OtherResponsibility,
-                  OtherInputType.responsibility_id ==
-                  OtherResponsibility.id)
-            .join(OtherAssignment,
-                  OtherAssignment.responsibility_id ==
-                  OtherResponsibility.id)
-            .filter(
-                RoleAssignment.role_id == role.id,
-                OtherAssignment.role_id != role.id
-            )
-        ).all()
+        for edge in edges:
+            edge['data']['source_color'] = role_colors[edge['data']['source']]
 
-        for assignment_id, target_id in targets:
-            edges.append({
-                'data': {
-                    'id': "-".join([str(assignment_id), "to"]),
-                    'source': str(role.id),
-                    'target': str(target_id),
-                }
-            })
+            # nodes.append({
+            #     'data': {
+            #         'id': str(role.id),
+            #         'name': role.name,
+            #         'width': str(len(role.name) * 10),
+            #         'color': color,
+            #         'parent': str(role.group.id)
+            #     }
+            # })
+            #
+            # connection = connections.setdefault(
+            #     (str(source_id), str(role.id)), {
+            #         'id': "-".join([str(assignment_id), "from"]),
+            #         'content_types': set()
+            #     })
+            #
+            # connection['content_types'].add(
+            #     str(ContentType.objects.id(id=content_type_id)))
+
+        targets = role.targets().all()
+
+        # for assignment_id, other_assignment_id, target_id, content_type_id \
+        #         in targets:
+        #     content_type = ContentType.objects.id(id=str(content_type_id))
+        #     pass
+            # edges.append({
+            #     'data': {
+            #         'id': str(assignment_id) + "-edge",
+            #         'name': "Hello",
+            #         'source': str(role.id),
+            #         'target': str(assignment_id),
+            #         'source_color': color,
+            #         'target_color': color,
+            #     }
+            # })
+            # connection = connections.setdefault(
+            #     (str(role.id), str(target_id)), {
+            #         'id': "-".join([str(assignment_id), "to"]),
+            #         'content_types': set()
+            #     })
+            #
+            # connection['content_types'].add(
+            #     str(ContentType.objects.id(id=content_type_id)))
+
+    # for key, value in connections.items():
+    #     source, target = key
+    #     edges.append({
+    #         'data': {
+    #             'id': value['id'],
+    #             'name': "<br>".join(list(value['content_types'])),
+    #             'source': source,
+    #             'target': target,
+    #             'source_color': role_colors[source],
+    #             'target_color': role_colors[target],
+    #         }
+    #     })
+
 
         # For comparison, Django only implementation.
         # for responsibility in role.responsibilities.all():
@@ -147,7 +185,6 @@ def deliverable_organization_chart(request, deliverable_id,
         #                     'target': str(role.id)
         #                 }
         #             })
-
     return render(request, template, context={
         'deliverable': deliverable,
         'nodes': json.dumps(nodes),

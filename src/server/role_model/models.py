@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 
 from aldjemy.meta import AldjemyMeta
+from sqlalchemy.orm import aliased
 
 from common.models import (
     Choices, States, TimeStampedUUIDModel, NameSlugTimeStampedUUIDModel,
@@ -16,7 +17,8 @@ class Ownership(models.Model):
     Instances of the inherited model belongs to `organization`.
     """
     organization = models.ForeignKey(settings.ROLE_MODEL_ORGANIZATION_MODEL,
-                                     on_delete='CASCADE')
+                                     on_delete='CASCADE',
+                                     related_name="%(class)ss")
 
     class Meta:
         abstract = True
@@ -29,10 +31,19 @@ class Deliverable(Ownership, NameSlugTimeStampedUUIDModel,
     """
 
 
+class GroupManager():
+    def get_queryset(self):
+        return super().get_queryset().select_related('roles')
+
+
 class Group(Ownership, NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
     """
     Each role belong to a group.
     """
+    objects = GroupManager()
+
+    class Meta:
+        base_manager_name = 'objects'
 
 
 class Format(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
@@ -71,6 +82,8 @@ class ContentTypeManager(models.Manager):
     Set default select_related.
     Reduces 90% of queries on the Responsibility Admin Change Form page.
     """
+    _id_cache = {}
+
     def get_queryset(self):
         return super().get_queryset().select_related(
             'deliverable',
@@ -78,6 +91,14 @@ class ContentTypeManager(models.Manager):
             'group',
             'facet',
             'format')
+
+    def id(self, id):
+        """
+        Move this to a Redis cache time out after 5 seconds.
+        """
+        if id not in ContentTypeManager._id_cache:
+            ContentTypeManager._id_cache[id] = ContentType.objects.get(id=id)
+        return ContentTypeManager._id_cache[id]
 
 
 class ContentType(TimeStampedUUIDModel, metaclass=AldjemyMeta):
@@ -111,6 +132,12 @@ class ContentType(TimeStampedUUIDModel, metaclass=AldjemyMeta):
     @property
     def organization(self):
         return self.deliverable.organization
+
+    @property
+    def short_name(self):
+        return "{facet} :: {format}".format(
+            facet=str(self.facet),
+            format=str(self.format))
 
     def prose(self, plural=False):
         """
@@ -192,6 +219,86 @@ class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
             super().__str__(), "\n  ".join([
                 str(responsibility)
                 for responsibility in self.responsibilities.all()]))
+
+    def sources(self):
+        """
+        Returns an SQLAlchemy query of:
+        (assignment_id, other_assignment_id, other_role_id, content_type_id)
+        representing a list of incoming inputs for this role's
+        responsibilities.
+        """
+        RoleAssignment = aliased(Assignment.sa)
+        RoleResponsibility = aliased(Responsibility.sa)
+        RoleInputType = aliased(ResponsibilityInputType.sa)
+        OtherResponsibility = aliased(Responsibility.sa)
+        OtherAssignment = aliased(Assignment.sa)
+        OtherInputType = aliased(ResponsibilityInputType.sa)
+        InputType = aliased(ContentType.sa)
+        OutputType = aliased(ContentType.sa)
+        return (RoleAssignment
+            .query(RoleAssignment.id,
+                   OtherAssignment.id,
+                   OtherAssignment.role_id,
+                   InputType.id)
+            .join(RoleResponsibility,
+                  RoleResponsibility.id ==
+                  RoleAssignment.responsibility_id)
+            .join(RoleInputType,
+                  RoleInputType.responsibility_id ==
+                  RoleResponsibility.id)
+            .join(InputType,
+                  RoleInputType.content_type_id ==
+                  InputType.id)
+            .join(OtherResponsibility,
+                  OtherResponsibility.output_type_id ==
+                  InputType.id)
+            .join(OtherAssignment,
+                  OtherAssignment.responsibility_id ==
+                  OtherResponsibility.id)
+            .filter(
+                RoleAssignment.role_id == self.id,
+                #OtherAssignment.role_id != self.id
+            ).distinct(RoleAssignment.id))
+
+    def targets(self):
+        """
+        Returns an SQLAlchemy query of:
+        (assignment_id, other_assignment_id, other_role_id, content_type_id)
+        representing a list of outgoing going for this role's
+        responsibilities.
+        """
+        RoleAssignment = aliased(Assignment.sa)
+        RoleResponsibility = aliased(Responsibility.sa)
+        RoleInputType = aliased(ResponsibilityInputType.sa)
+        OtherResponsibility = aliased(Responsibility.sa)
+        OtherAssignment = aliased(Assignment.sa)
+        OtherInputType = aliased(ResponsibilityInputType.sa)
+        InputType = aliased(ContentType.sa)
+        OutputType = aliased(ContentType.sa)
+        return (RoleAssignment
+            .query(RoleAssignment.id,
+                   OtherAssignment.id,
+                   OtherAssignment.role_id,
+                   OutputType.id)
+            .join(RoleResponsibility,
+                  RoleResponsibility.id ==
+                  RoleAssignment.responsibility_id)
+            .join(OutputType,
+                  RoleResponsibility.output_type_id ==
+                  OutputType.id)
+            .join(OtherInputType,
+                  OtherInputType.content_type_id ==
+                  OutputType.id)
+            .join(OtherResponsibility,
+                  OtherInputType.responsibility_id ==
+                  OtherResponsibility.id)
+            .join(OtherAssignment,
+                  OtherAssignment.responsibility_id ==
+                  OtherResponsibility.id)
+            .filter(
+                RoleAssignment.role_id == self.id,
+                OtherAssignment.role_id != self.id
+            ).distinct(RoleAssignment.id))
 
 
 class ResponsibilityManager(models.Manager):

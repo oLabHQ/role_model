@@ -12,7 +12,7 @@ from role_model.models import (
     Format,
     Facet,
     ContentType,
-    # Assignment,
+    Assignment,
     Role,
     Responsibility,)
 
@@ -187,6 +187,6 @@ admin.site.register(Group, GroupAdmin)
 admin.site.register(Format, FormatAdmin)
 admin.site.register(Facet, FacetAdmin)
 admin.site.register(ContentType, ContentTypeAdmin)
-# admin.site.register(Assignment, admin.ModelAdmin)
+admin.site.register(Assignment, admin.ModelAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Responsibility, ResponsibilityAdmin)

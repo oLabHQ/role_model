@@ -6,7 +6,7 @@
 <link href="{% static 'role_model/style.css' %}" rel="stylesheet" />
 <meta charset=utf-8 />
 <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
-<title>{{ deliverable.name }}</title>
+<title>{{ name }}</title>
 <script src="{% static 'role_model/cytoscape.min.js' %}"></script>
 </head>
 <body>
@@ -15,7 +15,7 @@
   var cy = window.cy = cytoscape({
     container: document.getElementById('cy'),
     layout: {
-      name: 'circle',
+      name: '{{ layout }}',
       padding: 20
     },
     boxSelectionEnabled: false,
@@ -66,9 +66,9 @@
           // 'source-arrow-shape': 'circle',
           'line-color': 'data(line_color)',
           'color': 'white',
-          'text-outline-width': 6,
+          'text-outline-width': '{{ edge.text_outline_width }}',
           'text-outline-color': 'black',
-          'font-size': 32,
+          'font-size': '{{ edge.font_size }}',
           // 'source-arrow-color': 'data(source_color)',
           'target-arrow-color': 'data(source_color)',
           "edge-text-rotation": "autorotate"

@@ -33,7 +33,7 @@ class Deliverable(Ownership, NameSlugTimeStampedUUIDModel,
 
 class GroupManager():
     def get_queryset(self):
-        return super().get_queryset().select_related('roles')
+        return super().get_queryset().prefetch_related('roles')
 
 
 class Group(Ownership, NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
@@ -223,8 +223,11 @@ class RoleManager(models.Manager):
     Set default select_related.
     """
     def get_queryset(self):
-        return super().get_queryset().select_related(
-            'group').prefetch_related('responsibilities', 'users')
+        return super().get_queryset() \
+            .select_related('group') \
+            .prefetch_related(
+                'responsibilities',
+                'users')
 
 
 class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
@@ -258,36 +261,37 @@ class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
         representing a list of incoming inputs for this role's
         responsibilities.
         """
-        RoleAssignment = aliased(Assignment.sa)
-        RoleResponsibility = aliased(Responsibility.sa)
-        RoleInputType = aliased(ResponsibilityInputType.sa)
-        OtherResponsibility = aliased(Responsibility.sa)
-        OtherAssignment = aliased(Assignment.sa)
-        OtherInputType = aliased(ResponsibilityInputType.sa)
-        InputType = aliased(ContentType.sa)
-        return (RoleAssignment
-            .query(RoleAssignment.id,
-                   OtherAssignment.id,
-                   OtherAssignment.role_id,
-                   InputType.id)
-            .join(RoleResponsibility,
-                  RoleResponsibility.id ==
-                  RoleAssignment.responsibility_id)
-            .join(RoleInputType,
-                  RoleInputType.responsibility_id ==
-                  RoleResponsibility.id)
-            .join(InputType,
-                  RoleInputType.content_type_id ==
-                  InputType.id)
-            .outerjoin(OtherResponsibility,
-                  OtherResponsibility.output_type_id ==
-                  InputType.id)
-            .outerjoin(OtherAssignment,
-                  OtherAssignment.responsibility_id ==
-                  OtherResponsibility.id)
+        class Alias:
+            RoleAssignment = aliased(Assignment.sa)
+            RoleResponsibility = aliased(Responsibility.sa)
+            RoleInputType = aliased(ResponsibilityInputType.sa)
+            OtherResponsibility = aliased(Responsibility.sa)
+            OtherAssignment = aliased(Assignment.sa)
+            OtherInputType = aliased(ResponsibilityInputType.sa)
+            InputType = aliased(ContentType.sa)
+        return Alias, (Alias.RoleAssignment \
+            .query(Alias.RoleAssignment.id,
+                   Alias.OtherAssignment.id,
+                   Alias.OtherAssignment.role_id,
+                   Alias.InputType.id)
+            .join(Alias.RoleResponsibility,
+                  Alias.RoleResponsibility.id ==
+                  Alias.RoleAssignment.responsibility_id)
+            .join(Alias.RoleInputType,
+                  Alias.RoleInputType.responsibility_id ==
+                  Alias.RoleResponsibility.id)
+            .join(Alias.InputType,
+                  Alias.RoleInputType.content_type_id ==
+                  Alias.InputType.id)
+            .outerjoin(Alias.OtherResponsibility,
+                  Alias.OtherResponsibility.output_type_id ==
+                  Alias.InputType.id)
+            .outerjoin(Alias.OtherAssignment,
+                  Alias.OtherAssignment.responsibility_id ==
+                  Alias.OtherResponsibility.id)
             .filter(
-                RoleAssignment.role_id == self.id,
-            ).distinct(OtherAssignment.role_id, InputType.id))
+                Alias.RoleAssignment.role_id == self.id,
+            ).distinct(Alias.OtherAssignment.role_id, Alias.InputType.id))
 
     def targets(self):
         """
@@ -296,36 +300,38 @@ class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
         representing a list of outgoing going for this role's
         responsibilities.
         """
-        RoleAssignment = aliased(Assignment.sa)
-        RoleResponsibility = aliased(Responsibility.sa)
-        RoleInputType = aliased(ResponsibilityInputType.sa)
-        OtherResponsibility = aliased(Responsibility.sa)
-        OtherAssignment = aliased(Assignment.sa)
-        OtherInputType = aliased(ResponsibilityInputType.sa)
-        OutputType = aliased(ContentType.sa)
-        return (RoleAssignment
-            .query(RoleAssignment.id,
-                   OtherAssignment.id,
-                   OtherAssignment.role_id,
-                   OutputType.id)
-            .join(RoleResponsibility,
-                  RoleResponsibility.id ==
-                  RoleAssignment.responsibility_id)
-            .join(OutputType,
-                  RoleResponsibility.output_type_id ==
-                  OutputType.id)
-            .outerjoin(OtherInputType,
-                  OtherInputType.content_type_id ==
-                  OutputType.id)
-            .outerjoin(OtherResponsibility,
-                  OtherInputType.responsibility_id ==
-                  OtherResponsibility.id)
-            .outerjoin(OtherAssignment,
-                  OtherAssignment.responsibility_id ==
-                  OtherResponsibility.id)
+        class Alias:
+            RoleAssignment = aliased(Assignment.sa)
+            RoleResponsibility = aliased(Responsibility.sa)
+            RoleInputType = aliased(ResponsibilityInputType.sa)
+            OtherResponsibility = aliased(Responsibility.sa)
+            OtherAssignment = aliased(Assignment.sa)
+            OtherInputType = aliased(ResponsibilityInputType.sa)
+            OutputType = aliased(ContentType.sa)
+
+        return Alias, (Alias.RoleAssignment \
+            .query(Alias.RoleAssignment.id,
+                   Alias.OtherAssignment.id,
+                   Alias.OtherAssignment.role_id,
+                   Alias.OutputType.id)
+            .join(Alias.RoleResponsibility,
+                  Alias.RoleResponsibility.id ==
+                  Alias.RoleAssignment.responsibility_id)
+            .join(Alias.OutputType,
+                  Alias.RoleResponsibility.output_type_id ==
+                  Alias.OutputType.id)
+            .outerjoin(Alias.OtherInputType,
+                  Alias.OtherInputType.content_type_id ==
+                  Alias.OutputType.id)
+            .outerjoin(Alias.OtherResponsibility,
+                  Alias.OtherInputType.responsibility_id ==
+                  Alias.OtherResponsibility.id)
+            .outerjoin(Alias.OtherAssignment,
+                  Alias.OtherAssignment.responsibility_id ==
+                  Alias.OtherResponsibility.id)
             .filter(
-                RoleAssignment.role_id == self.id,
-            ).distinct(OtherAssignment.role_id, OutputType.id))
+                Alias.RoleAssignment.role_id == self.id,
+            ).distinct(Alias.OtherAssignment.role_id, Alias.OutputType.id))
 
 
 class ResponsibilityManager(models.Manager):

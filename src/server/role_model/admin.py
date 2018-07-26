@@ -86,6 +86,15 @@ class RoleAdmin(OwnershipAdminMixin, admin.ModelAdmin):
         'responsibilities__input_types__facet__name',
         'responsibilities__input_types__format__name']
 
+    fieldsets = (
+        (None, {'fields': ('name', 'users', 'group', 'created',
+                           'chart_link',
+                           'chart',)}),
+    )
+    readonly_fields = ['created',
+                       'chart',
+                       'chart_link',]
+
     def responsibilities_table(self, instance):
         responsibilities = instance.responsibilities.all()
         html_args = []
@@ -112,6 +121,23 @@ class RoleAdmin(OwnershipAdminMixin, admin.ModelAdmin):
 
     responsibilities_table.allow_tags = True
     responsibilities_table.short_description = "responsibilities"
+
+
+    def chart_link(self, instance):
+        return format_html('<a href="{}">Chart</a>',
+            reverse('role_chart',
+                    kwargs={
+                        'role_id': str(instance.id)
+                    }))
+
+    def chart(self, instance):
+        return SafeText(
+            format_html("""
+<iframe src="{}" width="800px" height="600px"></iframe>""",
+                reverse('role_chart',
+                        kwargs={
+                            'role_id': str(instance.id)
+                        })))
 
 
 class FormatAdmin(

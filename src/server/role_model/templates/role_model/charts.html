@@ -56,13 +56,13 @@
       {
         selector: 'edge',
         css: {
-          'content': 'data(name)',
+          'content': '{{ edge.content }}',
           'target-arrow-shape': 'triangle',
           'control-point-step-size': '150px',
-          'curve-style': 'bezier',
+          'curve-style': '{{ edge.curve_style}}',
           'opacity': 0.9,
           'width': '5',
-          'arrow-scale': 1.5,
+          'arrow-scale': 2.5,
           // 'source-arrow-shape': 'circle',
           'line-color': 'data(line_color)',
           'color': 'white',

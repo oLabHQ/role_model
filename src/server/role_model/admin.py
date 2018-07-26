@@ -138,29 +138,46 @@ class DeliverableAdmin(OwnershipAdminMixin, admin.ModelAdmin):
                     'created')
     list_display_links = ('name', 'id')
     fieldsets = (
-        (None, {'fields': ('name', 'organization', 'organization_chart_link',
-                           'organization_chart')}),
+        (None, {'fields': ('name', 'organization',
+                           'chart_link',
+                           'chart_collapsed_link',
+                           'chart_collapsed',
+                           'chart',)}),
     )
-    readonly_fields = ['created', 'organization_chart',
-                       'organization_chart_link']
+    readonly_fields = ['created',
+                       'chart',
+                       'chart_collapsed',
+                       'chart_link',
+                       'chart_collapsed_link']
 
-    def organization_chart_link(self, instance):
-        return format_html('<a href="{}">Full organization chart</a>',
-            reverse('deliverable_organization_chart',
+    def chart_link(self, instance):
+        return format_html('<a href="{}">Chart</a>',
+            reverse('deliverable_chart',
                     kwargs={
                         'deliverable_id': str(instance.id)
                     }))
-    def organization_chart(self, instance):
+    def chart_collapsed_link(self, instance):
+        return format_html('<a href="{}">Chart (collapsed)</a>',
+            reverse('deliverable_chart_collapsed',
+                    kwargs={
+                        'deliverable_id': str(instance.id)
+                    }))
+    def chart_collapsed(self, instance):
         return SafeText(
             format_html("""
 <iframe src="{}" width="800px" height="600px"></iframe>""",
-                reverse('deliverable_organization_chart',
+                reverse('deliverable_chart_collapsed',
                         kwargs={
                             'deliverable_id': str(instance.id)
                         })))
-
-    organization_chart.allow_tags = True
-
+    def chart(self, instance):
+        return SafeText(
+            format_html("""
+<iframe src="{}" width="800px" height="600px"></iframe>""",
+                reverse('deliverable_chart',
+                        kwargs={
+                            'deliverable_id': str(instance.id)
+                        })))
 
 class ContentTypeAdmin(
         HasDeliverableAdminMixin,

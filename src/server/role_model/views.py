@@ -21,12 +21,11 @@ def chart_node(id, **kwargs):
     }
 
 
-def deliverable_organization_chart(request, deliverable_id,
-                                   template='role_model/charts.html'):
+def deliverable_chart(request, deliverable_id,
+                               template='role_model/charts.html',
+                               collapsed=False):
     """
     TODO:
-    0. Consider using aldjemy to write more efficient query.
-    1. Get the chart to look how we want it to look
     2. Figure out a pattern to these .filter calls and move them to the
     model managers.
     3. Create an intermediary data structure so we can write model methods
@@ -112,7 +111,6 @@ def deliverable_organization_chart(request, deliverable_id,
                 in targets:
             if not other_assignment_id:
                 content_type = content_types[str(content_type_id)]
-                print(content_type.short_name)
                 edges.append({
                     'data': {
                         'id': "-".join([str(role), str(role.id),
@@ -120,7 +118,7 @@ def deliverable_organization_chart(request, deliverable_id,
                         'name': content_type.short_name,
                         'source': str(role.id),
                         'target': str(role.id),
-                        'source_color': None,
+                        'source_color': 'red',
                         'target_color': color,
                         'classes': 'autorotate',
                         'line_color': 'red'
@@ -128,10 +126,24 @@ def deliverable_organization_chart(request, deliverable_id,
                 })
 
     for edge in edges:
-        edge['data']['source_color'] = role_colors[edge['data']['source']]
+        if not edge['data']['source_color']:
+            edge['data']['source_color'] = role_colors[edge['data']['source']]
+
+    if collapsed:
+        edge_configuration = {
+            'curve_style': 'unbundled-bezier',
+            'content': ''
+        }
+    else:
+        edge_configuration = {
+            'curve_style': 'bezier',
+            'content': 'data(name)'
+        }
+
 
     return render(request, template, context={
         'deliverable': deliverable,
         'nodes': json.dumps(nodes),
-        'edges': json.dumps(edges)
+        'edges': json.dumps(edges),
+        'edge': edge_configuration
     })

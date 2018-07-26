@@ -138,10 +138,18 @@ class DeliverableAdmin(OwnershipAdminMixin, admin.ModelAdmin):
                     'created')
     list_display_links = ('name', 'id')
     fieldsets = (
-        (None, {'fields': ('name', 'organization', 'organization_chart')}),
+        (None, {'fields': ('name', 'organization', 'organization_chart_link',
+                           'organization_chart')}),
     )
-    readonly_fields = ['created', 'organization_chart']
+    readonly_fields = ['created', 'organization_chart',
+                       'organization_chart_link']
 
+    def organization_chart_link(self, instance):
+        return format_html('<a href="{}">Full organization chart</a>',
+            reverse('deliverable_organization_chart',
+                    kwargs={
+                        'deliverable_id': str(instance.id)
+                    }))
     def organization_chart(self, instance):
         return SafeText(
             format_html("""

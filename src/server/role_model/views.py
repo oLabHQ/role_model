@@ -13,6 +13,11 @@ from role_model.models import (
     ResponsibilityInputType)
 
 
+"""
+This module requires a good refactoring.
+"""
+
+
 def chart_node(id, **kwargs):
     return {
         'data': {

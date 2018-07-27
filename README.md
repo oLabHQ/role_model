@@ -11,6 +11,7 @@ It's meant to be a DESCRIPTIVE tool, not a prescriptive one.
 
 # TODO #
 * Replace Makefile with Docker devops.
+* Re-factor views, graph generating code with some design patterns.
 * Start building frontend
 * Extend API
 * Add logging

@@ -227,8 +227,10 @@ def deliverable_chart(request, deliverable_id,
             color=color,
             parent=role.group.id
         ))
-        sources = role.sources().all()
-        targets = role.targets().all()
+        _, sources = role.sources()
+        sources = sources.all()
+        _, targets = role.targets()
+        targets = targets.all()
 
         inserted = {}
 

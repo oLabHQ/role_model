@@ -116,9 +116,12 @@ class ContentType(TimeStampedUUIDModel, metaclass=AldjemyMeta):
     deliverable = models.ForeignKey('Deliverable',
                                     related_name='content_types',
                                     on_delete='CASCADE')
-    group = models.ForeignKey('Group', on_delete='CASCADE')
-    facet = models.ForeignKey('Facet', on_delete='CASCADE')
-    format = models.ForeignKey('Format', on_delete='CASCADE')
+    group = models.ForeignKey('Group', on_delete='CASCADE',
+                              related_name='content_types')
+    facet = models.ForeignKey('Facet', on_delete='CASCADE',
+                              related_name='content_types')
+    format = models.ForeignKey('Format', on_delete='CASCADE',
+                               related_name='content_types')
 
     objects = ContentTypeManager()
 
@@ -151,6 +154,69 @@ class ContentType(TimeStampedUUIDModel, metaclass=AldjemyMeta):
             format=str(self.format).lower(),
             deliverable=str(self.deliverable),
             facet=str(self.facet).lower())
+
+    def sources(self):
+        """
+        Returns an SQLAlchemy query of:
+        (assignment_id, other_assignment_id, other_role_id, content_type_id)
+        representing a list of incoming inputs for this role's
+        responsibilities.
+        """
+        class Alias:
+            RoleAssignment = aliased(Assignment.sa)
+            RoleResponsibility = aliased(Responsibility.sa)
+            RoleInputType = aliased(ResponsibilityInputType.sa)
+            OtherResponsibility = aliased(Responsibility.sa)
+            OtherAssignment = aliased(Assignment.sa)
+            InputType = aliased(ContentType.sa)
+            OutputType = aliased(ContentType.sa)
+
+
+        return Alias, (Alias.RoleAssignment
+            .query(Alias.RoleAssignment.id,
+                   Alias.RoleAssignment.role_id,
+                   Alias.InputType.id)
+            .join(Alias.RoleResponsibility,
+                  Alias.RoleResponsibility.id ==
+                  Alias.RoleAssignment.responsibility_id)
+            .join(Alias.RoleInputType,
+                  Alias.RoleInputType.responsibility_id ==
+                  Alias.RoleResponsibility.id)
+            .join(Alias.InputType,
+                  Alias.RoleInputType.content_type_id ==
+                  Alias.InputType.id)
+            .filter(Alias.RoleResponsibility.output_type_id == self.id))
+        # 
+        # # return Alias, (Alias.RoleAssignment \
+        # #     .query(Alias.RoleAssignment.id,
+        # #            Alias.OtherAssignment.id,
+        # #            Alias.OtherAssignment.role_id,
+        # #            Alias.OutputType.id)
+        # #     .outerjoin(Alias.OtherResponsibility,
+        # #           Alias.OtherResponsibility.output_type_id ==
+        # #           Alias.OutputType.id)
+        # #     .outerjoin(Alias.OtherAssignment,
+        # #           Alias.OtherAssignment.responsibility_id ==
+        # #           Alias.OtherResponsibility.id)
+        #     # .join(Alias.RoleResponsibility,
+        #     #       Alias.RoleResponsibility.id ==
+        #     #       Alias.RoleAssignment.responsibility_id)
+        #     # .join(Alias.RoleInputType,
+        #     #       Alias.RoleInputType.responsibility_id ==
+        #     #       Alias.RoleResponsibility.id)
+        #     # .join(Alias.InputType,
+        #     #       Alias.RoleInputType.content_type_id ==
+        #     #       Alias.InputType.id)
+        #     # .outerjoin(Alias.OtherResponsibility,
+        #     #       Alias.OtherResponsibility.output_type_id ==
+        #     #       Alias.InputType.id)
+        #     # .outerjoin(Alias.OtherAssignment,
+        #     #       Alias.OtherAssignment.responsibility_id ==
+        #     #       Alias.OtherResponsibility.id)
+        #     .filter(
+        #         Alias.OutputType.id == self.id,
+        #     ).distinct(Alias.OtherAssignment.role_id, Alias.InputType.id))
+
 
 
 class AssignmentManager(models.Manager):

@@ -19,5 +19,8 @@ urlpatterns = [
         name='deliverable_chart_collapsed',
         kwargs={
             'collapsed': True
-        })
+        }),
+    url(r'^deliverable_content_type_chart/(?P<deliverable_id>[0-9a-f-]+)$',
+        views.deliverable_content_type_chart,
+        name='deliverable_content_type_chart'),
 ]

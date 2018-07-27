@@ -167,6 +167,7 @@ class DeliverableAdmin(OwnershipAdminMixin, admin.ModelAdmin):
         (None, {'fields': ('name', 'organization',
                            'chart_link',
                            'chart_collapsed_link',
+                           'content_type_chart_link',
                            'chart_collapsed',
                            'chart',)}),
     )
@@ -174,7 +175,15 @@ class DeliverableAdmin(OwnershipAdminMixin, admin.ModelAdmin):
                        'chart',
                        'chart_collapsed',
                        'chart_link',
-                       'chart_collapsed_link']
+                       'chart_collapsed_link',
+                       'content_type_chart_link']
+
+    def content_type_chart_link(self, instance):
+        return format_html('<a href="{}">Content Type Chart</a>',
+            reverse('deliverable_content_type_chart',
+                    kwargs={
+                        'deliverable_id': str(instance.id)
+                    }))
 
     def chart_link(self, instance):
         return format_html('<a href="{}">Chart</a>',

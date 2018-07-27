@@ -175,6 +175,99 @@ def role_chart(request, role_id, template='role_model/charts.html'):
         }
     })
 
+
+def deliverable_content_type_chart(request, deliverable_id,
+                                   template='role_model/charts.html'):
+
+    deliverable = get_object_or_404(Deliverable, pk=deliverable_id)
+    nodes = []
+    edges = []
+    roles = {}
+    content_types = {}
+    content_type_colors = {}
+    connections = {}
+
+    group_colors = {}
+    role_colors = {}
+
+    for group in deliverable.organization.groups.all():
+        color = colors[len(group_colors) % len(colors)]
+        group_colors[str(group.id)] = color
+
+        for role in group.roles.all():
+            role_colors[str(role.id)] = color
+            roles[str(role.id)] = role
+
+        for content_type in group.content_types.all():
+            content_type_colors[str(content_type.id)] = color
+
+    for content_type in deliverable.content_types.all():
+        content_types[str(content_type.id)] = content_type
+
+    for group in Group.objects.filter(
+            roles__responsibilities__input_types__deliverable=deliverable) \
+            .distinct():
+        nodes.append({
+            'data': {
+                'id': str(group.id),
+                'name': group.name,
+                'width': '100',
+                'color': group_colors[str(group.id)]
+            }
+        })
+
+
+    for content_type in ContentType.objects.filter(deliverable=deliverable):
+        color = content_type_colors[str(content_type.id)]
+        name = content_type.short_name
+        nodes.append(chart_node(
+            id=content_type.id,
+            name=name,
+            width=len(name) * 16,
+            color=color,
+            parent=content_type.group.id
+        ))
+
+        _, sources = content_type.sources()
+        sources = sources.all()
+
+        for assignment_id, role_id, source_id in sources:
+            content_type = content_types[str(content_type.id)]
+            color = content_type_colors[str(source_id)]
+            role = roles[str(role_id)]
+            edges.append({
+                'data': {
+                    'id': "-".join([str(source_id), str(role.id),
+                                    str(content_type.id),]),
+                    'name': role.name,
+                    'source': str(source_id),
+                    'target': str(content_type.id),
+                    'source_color': None,
+                    'target_color': color,
+                    'classes': 'autorotate',
+                    'line_color': '#666'
+                }
+            })
+
+    for edge in edges:
+        if not edge['data']['source_color']:
+            edge['data']['source_color'] = \
+                content_type_colors[edge['data']['source']]
+
+    return render(request, template, context={
+        'name': deliverable.name,
+        'layout': 'grid',
+        'nodes': json.dumps(nodes),
+        'edges': json.dumps(edges),
+        'edge': {
+            'curve_style': 'bezier',
+            'content': 'data(name)',
+            'text_outline_width': 4,
+            'font_size': 32
+        }
+    })
+
+
 def deliverable_chart(request, deliverable_id,
                                template='role_model/charts.html',
                                collapsed=False):

@@ -208,6 +208,7 @@ class RoleModelTestCase(TestCase):
             responsibility=responsibility
         )
 
-        print(responsibility.prose())
+        # print(responsibility.prose())
         # developer.responsibilities.add(responsibility)
-        print(developer)
+        # print(developer)
+        self.deliverable.history().all().count()

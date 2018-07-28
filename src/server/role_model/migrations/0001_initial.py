@@ -27,6 +27,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('status', django_fsm.FSMField(choices=[(role_model.models.Status('formal'), 'formal'), (role_model.models.Status('ad_hoc'), 'ad_hoc'), (role_model.models.Status('adjunct'), 'adjunct')], default=role_model.models.Status('formal'), max_length=50)),
             ],
+            bases=(common.models.IsDeletedModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='ContentType',
@@ -38,6 +39,7 @@ class Migration(migrations.Migration):
             options={
                 'base_manager_name': 'objects',
             },
+            bases=(common.models.IsDeletedModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='Deliverable',
@@ -52,6 +54,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
+            bases=(common.models.IsDeletedModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='Facet',
@@ -66,6 +69,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
+            bases=(common.models.IsDeletedModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='Format',
@@ -81,6 +85,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
+            bases=(common.models.IsDeletedModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='Group',
@@ -95,6 +100,7 @@ class Migration(migrations.Migration):
             options={
                 'base_manager_name': 'objects',
             },
+            bases=(common.models.IsDeletedModelMixin, models.Model),
         ),
         migrations.CreateModel(
             name='Responsibility',
@@ -135,6 +141,7 @@ class Migration(migrations.Migration):
             options={
                 'base_manager_name': 'objects',
             },
+            bases=(common.models.IsDeletedModelMixin, models.Model),
         ),
         migrations.AddField(
             model_name='responsibility',
@@ -159,27 +166,27 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='contenttype',
             name='facet',
-            field=models.ForeignKey(on_delete='CASCADE', to='role_model.Facet'),
+            field=models.ForeignKey(on_delete='CASCADE', related_name='content_types', to='role_model.Facet'),
         ),
         migrations.AddField(
             model_name='contenttype',
             name='format',
-            field=models.ForeignKey(on_delete='CASCADE', to='role_model.Format'),
+            field=models.ForeignKey(on_delete='CASCADE', related_name='content_types', to='role_model.Format'),
         ),
         migrations.AddField(
             model_name='contenttype',
             name='group',
-            field=models.ForeignKey(on_delete='CASCADE', to='role_model.Group'),
+            field=models.ForeignKey(on_delete='CASCADE', related_name='content_types', to='role_model.Group'),
         ),
         migrations.AddField(
             model_name='assignment',
             name='responsibility',
-            field=models.ForeignKey(on_delete='CASCADE', to='role_model.Responsibility'),
+            field=models.ForeignKey(on_delete='CASCADE', related_name='assignments', to='role_model.Responsibility'),
         ),
         migrations.AddField(
             model_name='assignment',
             name='role',
-            field=models.ForeignKey(on_delete='CASCADE', to='role_model.Role'),
+            field=models.ForeignKey(on_delete='CASCADE', related_name='assignments', to='role_model.Role'),
         ),
         migrations.AlterUniqueTogether(
             name='assignment',

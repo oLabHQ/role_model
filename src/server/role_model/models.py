@@ -2,14 +2,17 @@ from enum import auto
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
+from django.contrib.contenttypes.fields import GenericRelation
 
 from aldjemy.meta import AldjemyMeta
 from sqlalchemy.orm import aliased
 
 from common.models import (
     Choices, States, TimeStampedUUIDModel, NameSlugTimeStampedUUIDModel,
-    UUIDModel)
+    UUIDModel, IsDeletedModelMixin, IsDeletedManagerMixin)
 from common.language import join_and
+from history.models import History
 
 
 class Ownership(models.Model):
@@ -24,19 +27,40 @@ class Ownership(models.Model):
         abstract = True
 
 
-class Deliverable(Ownership, NameSlugTimeStampedUUIDModel,
+class Deliverable(IsDeletedModelMixin, Ownership, NameSlugTimeStampedUUIDModel,
                   metaclass=AldjemyMeta):
     """
     The thing a group of employees are producing together.
     """
 
+    def history(self):
+        groups = self.organization.groups.all()
+        formats = self.formats.all()
+        facets = self.facets.all()
+        content_types = self.content_types.all()
+        responsibilities = Responsibility.objects.filter(
+            Q(input_types__in=content_types),
+            Q(output_type__in=content_types)).all()
+        assignments = Assignment.objects.filter(
+            Q(responsibility__in=responsibilities))
 
-class GroupManager():
+        return History.objects.filter(
+            Q(role_model_deliverable__id=self.id) |
+            Q(role_model_group__in=groups) |
+            Q(role_model_format__in=formats) |
+            Q(role_model_facet__in=facets) |
+            Q(role_model_contenttype__in=content_types) |
+            Q(role_model_responsibility__in=responsibilities) |
+            Q(role_model_assignment__in=assignments)).all()
+
+
+class GroupManager(IsDeletedManagerMixin, models.Manager):
     def get_queryset(self):
         return super().get_queryset().prefetch_related('roles')
 
 
-class Group(Ownership, NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
+class Group(IsDeletedModelMixin, Ownership, NameSlugTimeStampedUUIDModel,
+            metaclass=AldjemyMeta):
     """
     Each role belong to a group.
     """
@@ -46,7 +70,8 @@ class Group(Ownership, NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
         base_manager_name = 'objects'
 
 
-class Format(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
+class Format(IsDeletedModelMixin, NameSlugTimeStampedUUIDModel,
+             metaclass=AldjemyMeta):
     """
     A format of an output of a responsibility.
     It can be a document, code, questions, even usage generating analytics
@@ -61,7 +86,7 @@ class Format(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
         return self.deliverable.organization
 
 
-class Facet(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
+class Facet(IsDeletedModelMixin, NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
     """
     One face of the product, or product's data.
     For example, a product may have the following facets:
@@ -77,7 +102,7 @@ class Facet(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
         return self.deliverable.organization
 
 
-class ContentTypeManager(models.Manager):
+class ContentTypeManager(IsDeletedManagerMixin, models.Manager):
     """
     Set default select_related.
     Reduces 90% of queries on the Responsibility Admin Change Form page.
@@ -101,7 +126,8 @@ class ContentTypeManager(models.Manager):
         return ContentTypeManager._id_cache[id]
 
 
-class ContentType(TimeStampedUUIDModel, metaclass=AldjemyMeta):
+class ContentType(IsDeletedModelMixin, TimeStampedUUIDModel,
+                  metaclass=AldjemyMeta):
     """
     A content produced by an employee in the course of the company producing
     a product.
@@ -188,7 +214,7 @@ class ContentType(TimeStampedUUIDModel, metaclass=AldjemyMeta):
             .filter(Alias.RoleResponsibility.output_type_id == self.id))
 
 
-class AssignmentManager(models.Manager):
+class AssignmentManager(IsDeletedManagerMixin, models.Manager):
     """
     Set default select_related.
     """
@@ -210,7 +236,9 @@ class AssignmentManager(models.Manager):
                 'responsibility__input_types__format')
 
 
-class Assignment(TimeStampedUUIDModel, metaclass=AldjemyMeta):
+class Assignment(IsDeletedModelMixin, TimeStampedUUIDModel,
+                 metaclass=AldjemyMeta):
+
     class Status(States):
         """
         Describes how the responsibility was assigned.
@@ -238,9 +266,11 @@ class Assignment(TimeStampedUUIDModel, metaclass=AldjemyMeta):
             "the role to perform."),
     }
 
-    role = models.ForeignKey('Role', on_delete='CASCADE')
+    role = models.ForeignKey('Role', on_delete='CASCADE',
+                             related_name='assignments')
     responsibility = models.ForeignKey('Responsibility',
-                                       on_delete='CASCADE')
+                                       on_delete='CASCADE',
+                                       related_name='assignments')
     status = Status.Field(default=Status.formal)
 
     objects = AssignmentManager()
@@ -253,7 +283,7 @@ class Assignment(TimeStampedUUIDModel, metaclass=AldjemyMeta):
         return self.responsibility.organization
 
 
-class RoleManager(models.Manager):
+class RoleManager(IsDeletedManagerMixin, models.Manager):
     """
     Set default select_related.
     """
@@ -265,7 +295,8 @@ class RoleManager(models.Manager):
                 'users')
 
 
-class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
+class Role(IsDeletedModelMixin, NameSlugTimeStampedUUIDModel,
+           metaclass=AldjemyMeta):
     responsibilities = models.ManyToManyField('Responsibility',
                                               through='Assignment'
                                               )
@@ -369,7 +400,7 @@ class Role(NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
             ).distinct(Alias.OtherAssignment.role_id, Alias.OutputType.id))
 
 
-class ResponsibilityManager(models.Manager):
+class ResponsibilityManager(IsDeletedManagerMixin, models.Manager):
     """
     Set default select_related.
     Really speeds up pages where we generate a description for a list of

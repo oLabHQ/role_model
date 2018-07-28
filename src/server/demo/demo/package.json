@@ -1,8 +1,8 @@
 {
   "name": "demo",
   "version": "1.0.0",
-  "description": "Client of demo project",
-  "author": "Eric Man <lesscgt@gmail.com>",
+  "description": "A demonstration project",
+  "author": "Eric Man <eric@dataapi.blog>",
   "private": true,
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",

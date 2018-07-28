@@ -1,6 +1,6 @@
 # demo
 
-> Client of demo project
+> A demonstration project
 
 ## Build Setup
 

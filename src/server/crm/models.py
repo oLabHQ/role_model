@@ -107,7 +107,7 @@ class User(PermissionsMixin, TimeStampedUUIDModel, AbstractBaseUser):
         'Organization',
         verbose_name='organization',
         null=True, blank=True,
-        on_delete='CASCADE')
+        on_delete=models.CASCADE)
 
     user_type = UserType.Field()
 

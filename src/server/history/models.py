@@ -57,7 +57,7 @@ class History(TimeStampedModel):
     This model only works with models with a UUID primary key.
     """
     content_type = models.ForeignKey('contenttypes.ContentType',
-                                     on_delete='CASCADE')
+                                     on_delete=models.CASCADE)
 
     object_id = models.UUIDField(editable=False)
     instance = GenericForeignKey('content_type', 'object_id')

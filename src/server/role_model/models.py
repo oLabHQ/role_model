@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 
 from common.models import (
     Choices, States, TimeStampedUUIDModel, NameSlugTimeStampedUUIDModel,
-    UUIDModel, IsDeletedModelMixin, IsDeletedManagerMixin)
+    UUIDModel, IsDeletedModel, IsDeletedManager)
 from common.language import join_and
 from history.models import History
 
@@ -20,14 +20,14 @@ class Ownership(models.Model):
     Instances of the inherited model belongs to `organization`.
     """
     organization = models.ForeignKey(settings.ROLE_MODEL_ORGANIZATION_MODEL,
-                                     on_delete='CASCADE',
+                                     on_delete=models.CASCADE,
                                      related_name="%(class)ss")
 
     class Meta:
         abstract = True
 
 
-class Deliverable(IsDeletedModelMixin, Ownership, NameSlugTimeStampedUUIDModel,
+class Deliverable(IsDeletedModel, Ownership, NameSlugTimeStampedUUIDModel,
                   metaclass=AldjemyMeta):
     """
     The thing a group of employees are producing together.
@@ -54,12 +54,12 @@ class Deliverable(IsDeletedModelMixin, Ownership, NameSlugTimeStampedUUIDModel,
             Q(role_model_assignment__in=assignments)).all()
 
 
-class GroupManager(IsDeletedManagerMixin, models.Manager):
+class GroupManager(IsDeletedManager, models.Manager):
     def get_queryset(self):
         return super().get_queryset().prefetch_related('roles')
 
 
-class Group(IsDeletedModelMixin, Ownership, NameSlugTimeStampedUUIDModel,
+class Group(IsDeletedModel, Ownership, NameSlugTimeStampedUUIDModel,
             metaclass=AldjemyMeta):
     """
     Each role belong to a group.
@@ -70,7 +70,7 @@ class Group(IsDeletedModelMixin, Ownership, NameSlugTimeStampedUUIDModel,
         base_manager_name = 'objects'
 
 
-class Format(IsDeletedModelMixin, NameSlugTimeStampedUUIDModel,
+class Format(IsDeletedModel, NameSlugTimeStampedUUIDModel,
              metaclass=AldjemyMeta):
     """
     A format of an output of a responsibility.
@@ -79,14 +79,14 @@ class Format(IsDeletedModelMixin, NameSlugTimeStampedUUIDModel,
     """
     description = models.TextField(null=False, max_length=1024)
     deliverable = models.ForeignKey('Deliverable', related_name='formats',
-                                    on_delete='CASCADE')
+                                    on_delete=models.CASCADE)
 
     @property
     def organization(self):
         return self.deliverable.organization
 
 
-class Facet(IsDeletedModelMixin, NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
+class Facet(IsDeletedModel, NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
     """
     One face of the product, or product's data.
     For example, a product may have the following facets:
@@ -95,14 +95,14 @@ class Facet(IsDeletedModelMixin, NameSlugTimeStampedUUIDModel, metaclass=Aldjemy
     3. Analytics Interface
     """
     deliverable = models.ForeignKey('Deliverable',
-                                    related_name='facets', on_delete='CASCADE')
+                                    related_name='facets', on_delete=models.CASCADE)
 
     @property
     def organization(self):
         return self.deliverable.organization
 
 
-class ContentTypeManager(IsDeletedManagerMixin, models.Manager):
+class ContentTypeManager(IsDeletedManager, models.Manager):
     """
     Set default select_related.
     Reduces 90% of queries on the Responsibility Admin Change Form page.
@@ -126,7 +126,7 @@ class ContentTypeManager(IsDeletedManagerMixin, models.Manager):
         return ContentTypeManager._id_cache[id]
 
 
-class ContentType(IsDeletedModelMixin, TimeStampedUUIDModel,
+class ContentType(IsDeletedModel, TimeStampedUUIDModel,
                   metaclass=AldjemyMeta):
     """
     A content produced by an employee in the course of the company producing
@@ -141,12 +141,12 @@ class ContentType(IsDeletedModelMixin, TimeStampedUUIDModel,
     """
     deliverable = models.ForeignKey('Deliverable',
                                     related_name='content_types',
-                                    on_delete='CASCADE')
-    group = models.ForeignKey('Group', on_delete='CASCADE',
+                                    on_delete=models.CASCADE)
+    group = models.ForeignKey('Group', on_delete=models.CASCADE,
                               related_name='content_types')
-    facet = models.ForeignKey('Facet', on_delete='CASCADE',
+    facet = models.ForeignKey('Facet', on_delete=models.CASCADE,
                               related_name='content_types')
-    format = models.ForeignKey('Format', on_delete='CASCADE',
+    format = models.ForeignKey('Format', on_delete=models.CASCADE,
                                related_name='content_types')
 
     objects = ContentTypeManager()
@@ -214,7 +214,7 @@ class ContentType(IsDeletedModelMixin, TimeStampedUUIDModel,
             .filter(Alias.RoleResponsibility.output_type_id == self.id))
 
 
-class AssignmentManager(IsDeletedManagerMixin, models.Manager):
+class AssignmentManager(IsDeletedManager, models.Manager):
     """
     Set default select_related.
     """
@@ -236,7 +236,7 @@ class AssignmentManager(IsDeletedManagerMixin, models.Manager):
                 'responsibility__input_types__format')
 
 
-class Assignment(IsDeletedModelMixin, TimeStampedUUIDModel,
+class Assignment(IsDeletedModel, TimeStampedUUIDModel,
                  metaclass=AldjemyMeta):
 
     class Status(States):
@@ -266,10 +266,10 @@ class Assignment(IsDeletedModelMixin, TimeStampedUUIDModel,
             "the role to perform."),
     }
 
-    role = models.ForeignKey('Role', on_delete='CASCADE',
+    role = models.ForeignKey('Role', on_delete=models.CASCADE,
                              related_name='assignments')
     responsibility = models.ForeignKey('Responsibility',
-                                       on_delete='CASCADE',
+                                       on_delete=models.CASCADE,
                                        related_name='assignments')
     status = Status.Field(default=Status.formal)
 
@@ -283,7 +283,7 @@ class Assignment(IsDeletedModelMixin, TimeStampedUUIDModel,
         return self.responsibility.organization
 
 
-class RoleManager(IsDeletedManagerMixin, models.Manager):
+class RoleManager(IsDeletedManager, models.Manager):
     """
     Set default select_related.
     """
@@ -295,15 +295,14 @@ class RoleManager(IsDeletedManagerMixin, models.Manager):
                 'users')
 
 
-class Role(IsDeletedModelMixin, NameSlugTimeStampedUUIDModel,
+class Role(IsDeletedModel, NameSlugTimeStampedUUIDModel,
            metaclass=AldjemyMeta):
     responsibilities = models.ManyToManyField('Responsibility',
-                                              through='Assignment'
-                                              )
+                                              through='Assignment')
     users = models.ManyToManyField(settings.AUTH_USER_MODEL)
     group = models.ForeignKey('role_model.Group',
                               related_name='roles',
-                              on_delete='CASCADE')
+                              on_delete=models.CASCADE)
 
     objects = RoleManager()
 
@@ -400,7 +399,7 @@ class Role(IsDeletedModelMixin, NameSlugTimeStampedUUIDModel,
             ).distinct(Alias.OtherAssignment.role_id, Alias.OutputType.id))
 
 
-class ResponsibilityManager(IsDeletedManagerMixin, models.Manager):
+class ResponsibilityManager(IsDeletedManager, models.Manager):
     """
     Set default select_related.
     Really speeds up pages where we generate a description for a list of
@@ -424,9 +423,9 @@ class ResponsibilityManager(IsDeletedManagerMixin, models.Manager):
 
 
 class ResponsibilityInputType(UUIDModel, metaclass=AldjemyMeta):
-    content_type = models.ForeignKey('ContentType', on_delete='CASCADE')
+    content_type = models.ForeignKey('ContentType', on_delete=models.CASCADE)
     responsibility = models.ForeignKey('Responsibility',
-                                       on_delete='CASCADE')
+                                       on_delete=models.CASCADE)
 
 
 class Responsibility(Ownership, TimeStampedUUIDModel, metaclass=AldjemyMeta):
@@ -461,7 +460,7 @@ class Responsibility(Ownership, TimeStampedUUIDModel, metaclass=AldjemyMeta):
                                          through='ResponsibilityInputType')
     output_type = models.ForeignKey('role_model.ContentType',
                                     related_name='inputs',
-                                    on_delete='CASCADE')
+                                    on_delete=models.CASCADE)
 
     objects = ResponsibilityManager()
 

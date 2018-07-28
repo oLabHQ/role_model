@@ -7,8 +7,11 @@ from django_extensions.db.models import TimeStampedModel
 from django_fsm import FSMField
 
 
-class IsDeletedModelMixin:
+class IsDeletedModel(models.Model):
     is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
 
     def mark_as_deleted(self, save=False):
         self.is_deleted = True
@@ -16,7 +19,7 @@ class IsDeletedModelMixin:
             self.save(update_fields=['is_deleted'])
 
 
-class IsDeletedManagerMixin:
+class IsDeletedManager(models.Manager):
     def undeleted(self):
         return self.filter(is_deleted=False)
 

@@ -1,0 +1,111 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+<link href="{% static 'network_graph/style.css' %}" rel="stylesheet" />
+<meta charset=utf-8 />
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+<title>{{ name }}</title>
+<script src="{% static 'network_graph/cytoscape.min.js' %}"></script>
+</head>
+<body>
+  <div id="cy"></div>
+  <script>
+  var cy = window.cy = cytoscape({
+    container: document.getElementById('cy'),
+    layout: {
+      name: '{{ layout }}',
+      padding: 20
+    },
+    boxSelectionEnabled: false,
+    autounselectify: true,
+    style: [
+      {
+        selector: 'node',
+        css: {
+          'shape': 'roundrectangle',
+          'width': 'data(width)',
+          'padding': '5',
+          'content': 'data(name)',
+          'text-valign': 'center',
+          'text-outline-width': 2,
+          'text-outline-color': 'data(color)',
+          'background-color': 'data(color)',
+          'color': '#fff',
+          'font-size': 24,
+          'font-family': 'monaco'
+        }
+      },
+      {
+        selector: '$node > node',
+        css: {
+          'text-outline-color': 'data(color)',
+          'text-outline-width': 4,
+          'padding-top': '10px',
+          'padding-left': '10px',
+          'padding-bottom': '10px',
+          'padding-right': '10px',
+          'text-valign': 'top',
+          'text-halign': 'center',
+          'background-color': 'data(color)',
+          'background-opacity': '0.1',
+          'font-size': 24,
+        }
+      },
+      {
+        selector: 'edge',
+        css: {
+          'content': '{{ edge.content }}',
+          'target-arrow-shape': 'triangle',
+          'control-point-step-size': '150px',
+          'curve-style': '{{ edge.curve_style}}',
+          'opacity': 0.9,
+          'width': '5',
+          'arrow-scale': 2.5,
+          // 'source-arrow-shape': 'circle',
+          'line-color': 'data(line_color)',
+          'color': 'white',
+          'text-outline-width': '{{ edge.text_outline_width }}',
+          'text-outline-color': 'black',
+          'font-size': '{{ edge.font_size }}',
+          // 'source-arrow-color': 'data(source_color)',
+          'target-arrow-color': 'data(source_color)',
+          "edge-text-rotation": "autorotate"
+        }
+      },
+      {
+        selector: ':selected',
+        css: {
+          'background-color': 'black',
+          'line-color': 'black',
+          'target-arrow-color': 'black',
+          'source-arrow-color': 'black'
+        }
+      }
+    ],
+
+    elements: {
+      nodes: {{ nodes | safe }},
+      edges: {{ edges | safe }}
+    },
+    // elements: {
+    //   nodes: [
+    //     { data: { id: 'a', parent: 'b' }, },
+    //     { data: { id: 'b' } },
+    //     { data: { id: 'c', parent: 'b' }, },
+    //     { data: { id: 'd' }, },
+    //     { data: { id: 'e' } },
+    //     { data: { id: 'f', parent: 'e' }, }
+    //   ],
+    //   edges: [
+    //     { data: { id: 'ad', source: 'a', target: 'd' } },
+    //     { data: { id: 'eb', source: 'e', target: 'b' } }
+    //
+    //   ]
+    // },
+
+  });
+  </script>
+</body>
+</html>

@@ -77,6 +77,7 @@ ALLAUTH_GOOGLE_SOCIALAPP_NAME = "Google"
 ALLAUTH_GOOGLE_SOCIALAPP_CLIENT_ID = 1
 ALLAUTH_GOOGLE_SOCIALAPP_SECRET_KEY = 1
 
+HISTORY_FIELD_NAME = '_history'
 HISTORY_MODELS = [
     'role_model.Assignment',
     'role_model.ContentType',

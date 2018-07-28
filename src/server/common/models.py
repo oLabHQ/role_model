@@ -7,6 +7,20 @@ from django_extensions.db.models import TimeStampedModel
 from django_fsm import FSMField
 
 
+class IsDeletedModelMixin:
+    is_deleted = models.BooleanField(default=False)
+
+    def mark_as_deleted(self, save=False):
+        self.is_deleted = True
+        if save:
+            self.save(update_fields=['is_deleted'])
+
+
+class IsDeletedManagerMixin:
+    def undeleted(self):
+        return self.filter(is_deleted=False)
+
+
 class UUIDModel(models.Model):
     """
     Use this base model class to use a UUID primary key.

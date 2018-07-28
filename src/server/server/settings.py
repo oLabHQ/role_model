@@ -78,6 +78,7 @@ ALLAUTH_GOOGLE_SOCIALAPP_CLIENT_ID = 1
 ALLAUTH_GOOGLE_SOCIALAPP_SECRET_KEY = 1
 
 HISTORY_MODELS = [
+    'role_model.Assignment',
     'role_model.ContentType',
     'role_model.Deliverable',
     'role_model.Facet',

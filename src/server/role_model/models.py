@@ -186,37 +186,6 @@ class ContentType(TimeStampedUUIDModel, metaclass=AldjemyMeta):
                   Alias.RoleInputType.content_type_id ==
                   Alias.InputType.id)
             .filter(Alias.RoleResponsibility.output_type_id == self.id))
-        # 
-        # # return Alias, (Alias.RoleAssignment \
-        # #     .query(Alias.RoleAssignment.id,
-        # #            Alias.OtherAssignment.id,
-        # #            Alias.OtherAssignment.role_id,
-        # #            Alias.OutputType.id)
-        # #     .outerjoin(Alias.OtherResponsibility,
-        # #           Alias.OtherResponsibility.output_type_id ==
-        # #           Alias.OutputType.id)
-        # #     .outerjoin(Alias.OtherAssignment,
-        # #           Alias.OtherAssignment.responsibility_id ==
-        # #           Alias.OtherResponsibility.id)
-        #     # .join(Alias.RoleResponsibility,
-        #     #       Alias.RoleResponsibility.id ==
-        #     #       Alias.RoleAssignment.responsibility_id)
-        #     # .join(Alias.RoleInputType,
-        #     #       Alias.RoleInputType.responsibility_id ==
-        #     #       Alias.RoleResponsibility.id)
-        #     # .join(Alias.InputType,
-        #     #       Alias.RoleInputType.content_type_id ==
-        #     #       Alias.InputType.id)
-        #     # .outerjoin(Alias.OtherResponsibility,
-        #     #       Alias.OtherResponsibility.output_type_id ==
-        #     #       Alias.InputType.id)
-        #     # .outerjoin(Alias.OtherAssignment,
-        #     #       Alias.OtherAssignment.responsibility_id ==
-        #     #       Alias.OtherResponsibility.id)
-        #     .filter(
-        #         Alias.OutputType.id == self.id,
-        #     ).distinct(Alias.OtherAssignment.role_id, Alias.InputType.id))
-
 
 
 class AssignmentManager(models.Manager):

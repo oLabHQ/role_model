@@ -42,6 +42,7 @@ class TimeStampedUUIDModel(TimeStampedModel, UUIDModel):
     """
     class Meta:
         abstract = True
+        ordering = ['created']
 
 
 class NameSlugModel(models.Model):
@@ -65,6 +66,7 @@ class NameSlugTimeStampedUUIDModel(NameSlugModel, TimeStampedUUIDModel):
     """
     class Meta:
         abstract = True
+        ordering = ['created']
 
 
 class EnumField(models.CharField):

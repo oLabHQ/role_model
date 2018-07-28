@@ -22,7 +22,7 @@ def chart_node(id, **kwargs):
     return {
         'data': {
             k: str(v)
-                for k, v in dict(id=id, **kwargs).items() if v
+                for k, v in dict(id=id, **kwargs).items() if v is not None
         }
     }
 

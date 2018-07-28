@@ -7,8 +7,7 @@ Test:
 
 Potential for improvements:
   1. Consider using database triggers to more fully capture changes.
-  2. For a more sophisticated framework, see [Django Reversion](https://github.com/etianen/django-reversion).
-  3. Refactor the History.delta into separate fields?
+  2. Refactor the History.delta into separate fields?
 
 # Future #
 

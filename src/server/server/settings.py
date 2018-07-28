@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'aldjemy',
     'history',
+    'network_graph',
     'debug_toolbar',
 ]
 

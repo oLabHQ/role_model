@@ -1,4 +1,5 @@
 from django.core.management import call_command
+from django.contrib.contenttypes.fields import GenericRelation
 from django.test import TestCase, override_settings
 from history.apps import register_models
 from history.models import History
@@ -48,7 +49,7 @@ class HistoryTestCase(TestCase):
         history = History.objects.previous(self.person)
 
         for field in self.person._meta.get_fields():
-            if not field.primary_key:
+            if not field.primary_key and not isinstance(field, GenericRelation):
                 fields = history.serialized_data['fields']
                 self.assertIn(field.name, fields)
 

@@ -2,6 +2,7 @@ import json
 import textwrap
 
 from django.core import serializers
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -70,6 +71,19 @@ class History(TimeStampedModel):
         verbose_name_plural = "histories"
         ordering = ['-id']
         base_manager_name = 'objects'
+
+    def __str__(self):
+        out = []
+
+        if self.delta:
+            for change in self.changes():
+                field, values = change
+                out.append("{}: {}".format(
+                    field, " → ".join(reversed(values))))
+        else:
+            out.append("{}".format(self.object_id))
+
+        return "{}: {}".format(str(self.content_type), ", ".join(out))
 
     def changes(self):
         changes = []

@@ -8,20 +8,39 @@ history_models = set()
 
 
 class HistoryConfig(AppConfig):
+    _requires_register_models = False
     name = 'history'
+
+    def ready(self):
+        try:
+            register_models()
+        except LookupError:
+            HistoryConfig._requires_register_models = True
 
 
 def register_models():
     """
     Load model strings specified in settings.HISTORY_MODELS.
     """
+    from django.contrib.contenttypes.fields import GenericRelation
+
     for model_name in settings.HISTORY_MODELS:
-        history_models.add(apps.get_model(model_name))
+        model = apps.get_model(model_name)
+        if model not in history_models:
+            history_models.add(model)
+            relation = GenericRelation('history.History',
+                                       related_query_name='{}_{}' \
+                                        .format(
+                                            model._meta.app_label,
+                                            model._meta.model_name))
+            field_name = getattr(settings, 'HISTORY_FIELD_NAME', '_history')
+            relation.contribute_to_class(model, field_name)
 
 
 def model_is_registered(model):
-    if not history_models:
+    if not history_models or HistoryConfig._requires_register_models:
         register_models()
+        HistoryConfig._requires_register_models = False
 
     if model in history_models:
         return True

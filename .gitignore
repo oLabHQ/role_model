@@ -1,7 +1,8 @@
 .DS_Store
 venv
 __pycache__
-src/server/static/
+/src/server/static/
+/src/server/demo/static/demo/client/
 targets/createdb
 targets/install
 targets/makemigrations

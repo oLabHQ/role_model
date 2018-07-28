@@ -19,8 +19,10 @@ from django.conf.urls.static import static
 from django.urls import path, include
 
 import role_model.urls
+import demo.urls
 
 urlpatterns = [
+    path('', include(demo.urls)),
     path('admin/', admin.site.urls),
     path('role_model/', include(role_model.urls)),
     # path('accounts/', include('allauth.urls')),

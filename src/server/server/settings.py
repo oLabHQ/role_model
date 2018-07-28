@@ -66,11 +66,15 @@ INSTALLED_APPS = [
     'history',
     'network_graph',
     'debug_toolbar',
+    'demo',
 ]
 
 SITE_ID = 1
 SITE_DOMAIN = 'localhost:8000'
 SITE_NAME = 'role model'
+
+DEMO_DELIVERABLE_NAME = 'Acme Software'
+DEMO_ORGANIZATION_NAME = 'Acme Ltd'
 
 ALLAUTH_GOOGLE_SOCIALAPP_ID = 1
 ALLAUTH_GOOGLE_SOCIALAPP_NAME = "Google"

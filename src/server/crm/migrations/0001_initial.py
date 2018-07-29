@@ -49,6 +49,7 @@ class Migration(migrations.Migration):
                 ('use_email_id', models.BooleanField(default=True)),
             ],
             options={
+                'ordering': ['created'],
                 'abstract': False,
             },
         ),

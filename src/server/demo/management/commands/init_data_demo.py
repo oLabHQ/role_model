@@ -1,7 +1,13 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
+
 from enum import Enum
+
+import unittest.mock
 
 from role_model.models import (
     Assignment,
@@ -17,11 +23,21 @@ from role_model.models import (
 from crm.models import Organization
 
 
+now = timezone.now()
+
+
 class Command(BaseCommand):
     help = 'Set up initial data for demo app.'
 
+    def increment_date(self):
+        self.now_method.return_value = self.now_method.return_value + \
+            timedelta(days=1)
 
+    @unittest.mock.patch('django.utils.timezone.now')
     def handle(self, *args, **options):
+        timezone.now.return_value = now - timedelta(days=365)
+        self.now_method = timezone.now
+
         self.groups = {}
         self.formats = {}
         self.facets = {}
@@ -134,33 +150,39 @@ class Command(BaseCommand):
             self.add_assignment(ROLE_BUSINESS_REGISTER, 'government_paperwork')
 
     def add_group(self, name):
+        self.increment_date()
         self.groups[name] = Group.objects.create(
             name=name,
             organization=self.organization)
         return self.groups[name]
 
     def add_role(self, name, group):
+        self.increment_date()
         self.roles[name] = Role.objects.create(
             name=name,
             group=self.groups[group])
         return self.roles[name]
 
     def delete_role(self, name):
+        self.increment_date()
         self.roles[name].mark_as_deleted(save=True)
 
     def add_facet(self, name):
+        self.increment_date()
         self.facets[name] = Facet.objects.create(
             name=name,
             deliverable=self.deliverable)
         return self.facets[name]
 
     def add_format(self, name):
+        self.increment_date()
         self.formats[name] = Format.objects.create(
             name=name,
             deliverable=self.deliverable)
         return self.formats[name]
 
     def add_content_type(self, group, facet, format):
+        self.increment_date()
         self.content_types[(group, facet, format)] = \
             ContentType.objects.create(
                 group=self.groups[group],
@@ -170,6 +192,7 @@ class Command(BaseCommand):
         return self.content_types[(group, facet, format)]
 
     def add_responsibility(self, name, input_types, output_type):
+        self.increment_date()
         self.responsibilities[name] = \
             Responsibility.objects.create(
                 operator=Operator.transform,
@@ -183,6 +206,7 @@ class Command(BaseCommand):
         return self.responsibilities[name]
 
     def add_assignment(self, role, *responsibilities):
+        self.increment_date()
         for responsibility in responsibilities:
             Assignment.objects.create(
                 role=self.roles[role],

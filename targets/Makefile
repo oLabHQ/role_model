@@ -105,4 +105,5 @@ superuser: install
 
 test_data: install createdb migrate superuser
 		$(manage) test_data_role_model
+		$(manage) init_data_demo
 		touch test_data

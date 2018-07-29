@@ -5,12 +5,13 @@ from history.models import History, MigrationState
 
 
 class MigrationStateAdmin(admin.ModelAdmin):
-    list_display = ('id', 'applied_migrations_table')
-    def applied_migrations_table(self, instance):
-        applied_migrations = instance.applied_migrations
+    list_display = ('id', 'app_migrations_table')
+
+    def app_migrations_table(self, instance):
+        app_migrations = instance.app_migrations
         html_args = []
         html = ['<table>']
-        for app_label, migration_name in applied_migrations:
+        for app_label, migration_names in sorted(app_migrations.items()):
             html.append('<tr>')
             html.append('<th>')
             html.append('{}')
@@ -18,15 +19,15 @@ class MigrationStateAdmin(admin.ModelAdmin):
             html.append('</th>')
             html.append('<td>')
             html.append('{}')
-            html_args.append(migration_name)
+            html_args.append(", ".join(migration_names))
             html.append('</td>')
             html.append('</tr>')
         html.append('</table>')
 
         return format_html("\n".join(html), *html_args)
 
-    applied_migrations_table.allow_tags = True
-    applied_migrations_table.short_description = "applied migrations"
+    app_migrations_table.allow_tags = True
+    app_migrations_table.short_description = "app migrations"
 
 
 class HistoryAdmin(admin.ModelAdmin):

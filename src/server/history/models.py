@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import json
 import textwrap
 
@@ -17,21 +18,38 @@ from jsondiff import diff
 class MigrationStateManager(models.Manager):
     def add(self):
         loader = MigrationLoader(connection)
+        app_migrations = OrderedDict()
         applied_migrations = sorted(loader.applied_migrations)
+        for app_label, migration_name in applied_migrations:
+            app_migrations.setdefault(app_label, []).append(migration_name)
+
         instance, created = MigrationState.objects.get_or_create(
+            app_migrations=app_migrations,
             applied_migrations=applied_migrations)
         return instance
 
 
 class MigrationState(TimeStampedModel):
+    app_migrations = JSONField()
     applied_migrations = JSONField(unique=True)
 
     objects = MigrationStateManager()
 
     @property
     def apps(self):
+        loader = MigrationLoader(connection)
         state = loader.project_state(self.applied_migrations)
         return state.apps
+
+    @property
+    def is_current(self):
+        loader = MigrationLoader(connection)
+
+        applied_migrations = \
+            set(tuple(value) for value in
+                self.applied_migrations)
+
+        return applied_migrations == loader.applied_migrations
 
 
 class HistoryManager(models.Manager):

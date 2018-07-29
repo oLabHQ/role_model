@@ -25,17 +25,6 @@ export default {
 </script>
 
 <style scoped>
-ul.CTAs {
-    padding: 20px;
-}
-
-ul.CTAs a {
-    text-align: center;
-    font-size: 0.9em !important;
-    display: block;
-    border-radius: 5px;
-    margin-bottom: 5px;
-}
 nav {
     min-width: 250px;
     max-width: 250px;

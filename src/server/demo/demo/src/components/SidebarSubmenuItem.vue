@@ -29,7 +29,7 @@ a {
 }
 
 a:hover {
-    color: #7386D5;
+    color: #7386D5 !important;
     background: #fff;
     text-decoration: none;
     transition: all 0.3s;

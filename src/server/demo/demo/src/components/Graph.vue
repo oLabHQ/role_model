@@ -3,11 +3,13 @@
     <Sidebar
       heading="Acme Ltd">
       <SidebarMenu>
-        <SidebarMenuItem>Organization Chart</SidebarMenuItem>
+        <SidebarMenuItem
+          href="http://google.com">Organization Chart</SidebarMenuItem>
         <SidebarSubmenu name="Roles">
           <SidebarSubmenuItem
             href="http://google.com">Test</SidebarSubmenuItem>
-          <SidebarSubmenuItem>Test</SidebarSubmenuItem>
+          <SidebarSubmenuItem
+            href="http://google.com">Test</SidebarSubmenuItem>
         </SidebarSubmenu>
       </SidebarMenu>
     </Sidebar>
@@ -17,6 +19,8 @@
 </template>
 
 <script>
+import gql from 'graphql-tag'
+
 import Sidebar from './Sidebar.vue'
 import SidebarMenu from './SidebarMenu.vue'
 import SidebarSubmenu from './SidebarSubmenu.vue'
@@ -25,12 +29,23 @@ import SidebarSubmenuItem from './SidebarSubmenuItem.vue'
 
 export default {
   name: 'Graph',
+  props: {
+    organizationHistory: {
+      type: Array,
+      default: function() {
+        return []
+      }
+    }
+  },
   components: {
     Sidebar,
     SidebarMenu,
     SidebarSubmenu,
     SidebarMenuItem,
     SidebarSubmenuItem
+  },
+  apollo: {
+    organizationHistory: gql`{hello}`,
   },
   data () {
     return {

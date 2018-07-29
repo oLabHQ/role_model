@@ -34,23 +34,24 @@ class Deliverable(IsDeletedModel, Ownership, NameSlugTimeStampedUUIDModel,
     """
 
     def history(self):
-        groups = self.organization.groups.all()
         formats = self.formats.all()
         facets = self.facets.all()
         content_types = self.content_types.all()
         responsibilities = Responsibility.objects.filter(
             Q(input_types__in=content_types),
             Q(output_type__in=content_types)).all()
+        roles = Role.objects.filter(responsibilities__in=responsibilities)
         assignments = Assignment.objects.filter(
             Q(responsibility__in=responsibilities))
 
         return History.objects.filter(
             Q(role_model_deliverable__id=self.id) |
-            Q(role_model_group__in=groups) |
             Q(role_model_format__in=formats) |
             Q(role_model_facet__in=facets) |
             Q(role_model_contenttype__in=content_types) |
             Q(role_model_responsibility__in=responsibilities) |
+            Q(role_model_role__in=roles) |
+            Q(role_model_group__roles__in=roles) |
             Q(role_model_assignment__in=assignments)).all()
 
 

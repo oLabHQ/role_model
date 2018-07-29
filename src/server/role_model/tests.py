@@ -1,6 +1,6 @@
 import json
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 import schema
@@ -21,6 +21,11 @@ class RoleModelAPITestCase(TestCase):
     """
     Test the GraphQL API.
     """
+
+    @override_settings(
+        GRAPHENE = {
+            'SCHEMA': 'role_model.schema.schema'
+        })
     def test_1(self):
         self.organization = Organization.objects.create(name="iOSLtd")
         self.deliverable = Deliverable.objects.create(

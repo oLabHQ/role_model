@@ -5,11 +5,33 @@ from django.core import serializers
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.postgres.fields import JSONField
-from django.db import models
+from django.db import models, connection
+from django.db.migrations.loader import MigrationLoader
 
 from django_extensions.db.models import TimeStampedModel
 
+
 from jsondiff import diff
+
+
+class MigrationStateManager(models.Manager):
+    def add(self):
+        loader = MigrationLoader(connection)
+        applied_migrations = sorted(loader.applied_migrations)
+        instance, created = MigrationState.objects.get_or_create(
+            applied_migrations=applied_migrations)
+        return instance
+
+
+class MigrationState(TimeStampedModel):
+    applied_migrations = JSONField(unique=True)
+
+    objects = MigrationStateManager()
+
+    @property
+    def apps(self):
+        state = loader.project_state(self.applied_migrations)
+        return state.apps
 
 
 class HistoryManager(models.Manager):
@@ -46,7 +68,8 @@ class HistoryManager(models.Manager):
         return History.objects.create(
             instance=instance,
             serialized_data=serialized_data,
-            delta=json.loads(delta) if delta else None)
+            delta=json.loads(delta) if delta else None,
+            migration_state=MigrationState.objects.add())
 
 
 class History(TimeStampedModel):
@@ -61,6 +84,8 @@ class History(TimeStampedModel):
 
     object_id = models.UUIDField(editable=False)
     instance = GenericForeignKey('content_type', 'object_id')
+    migration_state = models.ForeignKey('MigrationState',
+                                        on_delete='CASCADE')
 
     delta = JSONField(null=True, blank=True)
     serialized_data = JSONField()

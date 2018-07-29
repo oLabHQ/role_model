@@ -1,7 +1,32 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from history.models import History
+from history.models import History, MigrationState
+
+
+class MigrationStateAdmin(admin.ModelAdmin):
+    list_display = ('id', 'applied_migrations_table')
+    def applied_migrations_table(self, instance):
+        applied_migrations = instance.applied_migrations
+        html_args = []
+        html = ['<table>']
+        for app_label, migration_name in applied_migrations:
+            html.append('<tr>')
+            html.append('<th>')
+            html.append('{}')
+            html_args.append(app_label)
+            html.append('</th>')
+            html.append('<td>')
+            html.append('{}')
+            html_args.append(migration_name)
+            html.append('</td>')
+            html.append('</tr>')
+        html.append('</table>')
+
+        return format_html("\n".join(html), *html_args)
+
+    applied_migrations_table.allow_tags = True
+    applied_migrations_table.short_description = "applied migrations"
 
 
 class HistoryAdmin(admin.ModelAdmin):
@@ -50,3 +75,4 @@ class HistoryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(History, HistoryAdmin)
+admin.site.register(MigrationState, MigrationStateAdmin)

@@ -1,13 +1,14 @@
 <template>
   <div>
     <Sidebar
-      heading="Role Model">
+      heading="Acme Ltd">
       <SidebarMenu>
-        <SidebarSubmenu>
-          <SidebarSubmenuItem>Test</SidebarSubmenuItem>
+        <SidebarMenuItem>Organization Chart</SidebarMenuItem>
+        <SidebarSubmenu name="Roles">
+          <SidebarSubmenuItem
+            href="http://google.com">Test</SidebarSubmenuItem>
           <SidebarSubmenuItem>Test</SidebarSubmenuItem>
         </SidebarSubmenu>
-        <SidebarMenuItem>An Item</SidebarMenuItem>
       </SidebarMenu>
     </Sidebar>
     <div id="content">

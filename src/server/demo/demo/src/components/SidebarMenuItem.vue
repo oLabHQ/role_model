@@ -23,10 +23,11 @@ a {
 a:hover {
     color: #7386D5;
     background: #fff;
+    text-decoration: none;
+    transition: all 0.3s;
 }
 
 a,
-a:hover,
 a:focus {
     color: inherit;
     text-decoration: none;

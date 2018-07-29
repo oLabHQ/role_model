@@ -1,6 +1,6 @@
 <template>
   <li>
-    <a href="#">
+    <a :href="href">
       <slot></slot>
     </a>
   </li>
@@ -8,6 +8,12 @@
 
 <script>
 export default {
+  props: {
+    href: {
+      type: String,
+      default: "#"
+    }
+  }
 }
 </script>
 
@@ -25,10 +31,11 @@ a {
 a:hover {
     color: #7386D5;
     background: #fff;
+    text-decoration: none;
+    transition: all 0.3s;
 }
 
 a,
-a:hover,
 a:focus {
     color: inherit;
     text-decoration: none;

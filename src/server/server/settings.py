@@ -67,11 +67,19 @@ INSTALLED_APPS = [
     'network_graph',
     'debug_toolbar',
     'demo',
+    'corsheaders'
 ]
 
 SITE_ID = 1
 SITE_DOMAIN = 'localhost:8000'
 SITE_NAME = 'role model'
+
+CORS_ORIGIN_WHITELIST = (
+    'localhost:8000',
+    'localhost:8080',
+    'localhost:8081',
+)
+CORS_ALLOW_CREDENTIALS = True
 
 DEMO_DELIVERABLE_NAME = 'Acme Software'
 DEMO_ORGANIZATION_NAME = 'Acme Ltd'
@@ -98,10 +106,11 @@ HISTORY_MODELS = [
 # SocialApp
 
 GRAPHENE = {
-    'SCHEMA': 'role_model.schema.schema'
+    'SCHEMA': 'demo.schema.schema'
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

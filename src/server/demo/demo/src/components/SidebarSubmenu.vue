@@ -73,5 +73,4 @@ a::after {
     transform: translateY(-50%);
 }
 
-
 </style>

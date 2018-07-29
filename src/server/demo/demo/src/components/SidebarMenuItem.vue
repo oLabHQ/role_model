@@ -12,7 +12,7 @@ export default {
   props: {
     href: {
       type: String,
-      default: "#"
+      default: '#'
     }
   }
 }

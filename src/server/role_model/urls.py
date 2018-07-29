@@ -1,6 +1,6 @@
 from django.conf.urls import url
-from role_model import views
 from graphene_django.views import GraphQLView
+from role_model import views
 
 
 urlpatterns = [

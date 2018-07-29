@@ -22,7 +22,7 @@ import role_model.urls
 import demo.urls
 
 urlpatterns = [
-    path('', include(demo.urls)),
+    path('demo/', include(demo.urls)),
     path('admin/', admin.site.urls),
     path('role_model/', include(role_model.urls)),
     # path('accounts/', include('allauth.urls')),

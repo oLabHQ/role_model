@@ -32,7 +32,7 @@ export default {
   props: {
     organizationHistory: {
       type: Array,
-      default: function() {
+      default () {
         return []
       }
     }
@@ -45,7 +45,11 @@ export default {
     SidebarSubmenuItem
   },
   apollo: {
-    organizationHistory: gql`{hello}`,
+    organizationHistory: gql`{
+      organizationHistory {
+        id
+      }
+    }`
   },
   data () {
     return {

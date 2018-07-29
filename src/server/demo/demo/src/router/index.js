@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Graph from '@/components/Graph'
+import Index from '@/components/Index'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
@@ -11,8 +11,8 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'Graph',
-      component: Graph
+      name: 'Index',
+      component: Index
     }
   ]
 })

@@ -14,6 +14,7 @@
       </SidebarMenu>
     </Sidebar>
     <div id="content">
+      {{ organizationEvents }}
     </div>
   </div>
 </template>
@@ -30,12 +31,7 @@ import SidebarSubmenuItem from './SidebarSubmenuItem.vue'
 export default {
   name: 'Graph',
   props: {
-    organizationHistory: {
-      type: Array,
-      default () {
-        return []
-      }
-    }
+
   },
   components: {
     Sidebar,
@@ -45,15 +41,18 @@ export default {
     SidebarSubmenuItem
   },
   apollo: {
-    organizationHistory: gql`{
-      organizationHistory {
-        id
+    organizationEvents: gql`{
+      organizationEvents {
+        id,
+        fields,
+        event,
+        instance
       }
     }`
   },
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App'
+      organizationEvents: []
     }
   }
 }

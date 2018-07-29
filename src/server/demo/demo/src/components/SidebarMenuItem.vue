@@ -1,6 +1,6 @@
 <template>
   <li>
-    <a href="#">
+    <a :href="href">
       <i></i>
       <slot></slot>
     </a>
@@ -9,6 +9,10 @@
 
 <script>
 export default {
+  href: {
+    type: String,
+    default: "#"
+  }
 }
 </script>
 

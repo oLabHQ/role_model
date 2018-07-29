@@ -95,7 +95,8 @@ class History(TimeStampedModel):
 
         return changes
 
+    @property
     def modification(self):
         if not self.delta:
             return "created"
-        return "updated"
+        return "modified"

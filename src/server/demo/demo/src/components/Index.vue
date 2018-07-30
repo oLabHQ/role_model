@@ -49,7 +49,7 @@ import SidebarSubmenu from './SidebarSubmenu.vue'
 import SidebarMenuItem from './SidebarMenuItem.vue'
 import SidebarSubmenuItem from './SidebarSubmenuItem.vue'
 
-const uuidv4 = require('uuid/v4')
+import * as uuidv4 from 'uuid/v4'
 
 export default {
   name: 'Graph',

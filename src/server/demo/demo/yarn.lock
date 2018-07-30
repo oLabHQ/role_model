@@ -2130,6 +2130,13 @@ cyclist@~0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-0.2.2.tgz#1b33792e11e914a2fd6d6ed6447464444e5fa640"
 
+cytoscape@^3.2.9:
+  version "3.2.15"
+  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.2.15.tgz#6ce49340b29f0a22267667d9ca842d5d0b6f4eed"
+  dependencies:
+    heap "^0.2.6"
+    lodash.debounce "^4.0.8"
+
 d@1:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/d/-/d-1.0.0.tgz#754bb5bfe55451da69a58b94d45f4c5b0462d58f"
@@ -3538,6 +3545,10 @@ hash.js@^1.0.0, hash.js@^1.0.3:
 he@1.1.x, he@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/he/-/he-1.1.1.tgz#93410fd21b009735151f8868c2f271f3427e23fd"
+
+heap@^0.2.6:
+  version "0.2.6"
+  resolved "https://registry.yarnpkg.com/heap/-/heap-0.2.6.tgz#087e1f10b046932fc8594dd9e6d378afc9d1e5ac"
 
 hmac-drbg@^1.0.0:
   version "1.0.1"
@@ -7721,6 +7732,13 @@ vue-apollo@^3.0.0-beta.19:
   resolved "https://registry.yarnpkg.com/vue-apollo/-/vue-apollo-3.0.0-beta.19.tgz#26f5dbb6bd2a2a7f567320d293442d3c7ae70a08"
   dependencies:
     throttle-debounce "^2.0.0"
+
+vue-cytoscape@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/vue-cytoscape/-/vue-cytoscape-0.1.2.tgz#fd4485257ce52ae19d701c6633f922991ef092e5"
+  dependencies:
+    cytoscape "^3.2.9"
+    vue "^2.5.2"
 
 vue-eslint-parser@^2.0.3:
   version "2.0.3"

@@ -36,8 +36,7 @@
       </SidebarMenu>
     </Sidebar>
     <div id="content">
-      {{ currentIndex }}
-      {{ appliedEvents.length }}
+      <cytoscape :config="config"/>
     </div>
   </div>
 </template>
@@ -82,15 +81,53 @@ export default {
     }`
   },
   methods: {
+    pushNode (cy, node) {
+      this.elements.push(cy.add({
+        data: node
+      }))
+    },
+    popNode (cy) {
+      cy.remove(this.elements.pop())
+    },
+    runLayout (cy) {
+      cy.layout(this.layout).run()
+    },
     pushEvent (e) {
       this.appliedEvents.push(e)
       if (e.event === 'created') {
-        var instance = Object.assign({}, e.instance);
+        var instance = Object.assign({}, e.instance)
         instance.fields = Object.assign({}, e.instance.fields)
         this.$set(this.data, e.instance.pk, instance)
-        if (e.instance.model === 'role_model.role') {
-          this.roles.push(instance.pk)
-        }
+
+        this.$cytoscape.instance.then(cy => {
+          var node
+          var color
+          switch (e.instance.model) {
+            case 'role_model.role':
+              color = this.group_colors[instance.fields.group]
+              node = {
+                id: instance.pk,
+                name: instance.fields.name,
+                width: instance.fields.name.length * 16,
+                parent: instance.fields.group,
+                color: color
+              }
+              this.pushNode(cy, node)
+              break
+            case 'role_model.group':
+              color = this.nextColor
+              this.$set(this.group_colors, instance.pk, color)
+              node = {
+                id: instance.pk,
+                name: instance.fields.name,
+                width: instance.fields.name.length * 16,
+                color: color
+              }
+              this.pushNode(cy, node)
+              break
+          }
+          this.runLayout(cy)
+        })
       }
       if (e.event === 'modified') {
         for (var field in e.changes) {
@@ -106,8 +143,13 @@ export default {
       var e = this.appliedEvents.pop()
       if (e.event === 'created') {
         delete this.data[e.pk]
-        if (e.instance.model === 'role_model.role') {
+        if (e.instance.model === 'role_model.role' ||
+            e.instance.model === 'role_model.group') {
           this.roles.pop()
+          this.$cytoscape.instance.then(cy => {
+            this.popNode(cy)
+            this.runLayout(cy)
+          })
         }
       }
       if (e.event === 'modified') {
@@ -116,7 +158,6 @@ export default {
             const change = e.changes[field]
             const valueFrom = change[1]
             this.data[e.instance.pk].fields[field] = valueFrom
-            console.log("Set valueFrom")
           }
         }
       }
@@ -147,7 +188,12 @@ export default {
     }
   },
   computed: {
-    displayedRoles() {
+    nextColor () {
+      const colorIndex = (Object.keys(this.group_colors).length %
+        this.colors.length)
+      return this.colors[colorIndex]
+    },
+    displayedRoles () {
       return (this.roles.map((pk) => this.data[pk])
         .filter((role) => !role.fields.is_deleted))
     },
@@ -199,14 +245,111 @@ export default {
   },
   data () {
     return {
+      layout: {
+        name: 'circle',
+        padding: 20
+      },
       data: {},
       roles: [],
+      group_colors: {},
+      elements: [],
       appliedEvents: [],
       previousCursor: 0,
       currentIndex: 0,
       organizationEvents: [],
-      date: '1990-12-12',
-      cursor: 0
+      cursor: 0,
+      colors: [
+        '#6FB1FC',
+        '#EDA1ED',
+        '#86B342',
+        '#F5A45D',
+        '#6456B7',
+        '#FF007C'
+      ],
+      config: {
+        elements: {
+          nodes: [],
+          edges: []
+        },
+        layout: {
+          name: 'cose',
+          padding: 20
+        },
+        style: [
+          {
+            selector: 'node[width]',
+            css: {
+              width: 'data(width)'
+            }
+          },
+          {
+            selector: 'node[color]',
+            css: {
+              'text-outline-color': 'data(color)',
+              'background-color': 'data(color)'
+            }
+          },
+          {
+            selector: 'node',
+            css: {
+              'shape': 'roundrectangle',
+              'padding': '5',
+              'content': 'data(name)',
+              'text-valign': 'center',
+              'text-outline-width': 2,
+              'color': '#fff',
+              'font-size': 24,
+              'font-family': 'monaco'
+            }
+          },
+          {
+            selector: '$node > node',
+            css: {
+              // 'text-outline-color': 'data(color)',
+              'text-outline-width': 4,
+              'padding-top': '10px',
+              'padding-left': '10px',
+              'padding-bottom': '10px',
+              'padding-right': '10px',
+              'text-valign': 'top',
+              'text-halign': 'center',
+              // 'background-color': 'data(color)',
+              'background-opacity': '0.1',
+              'font-size': 24
+            }
+          },
+          {
+            selector: 'edge',
+            css: {
+              // 'content': 'data(name)',
+              'target-arrow-shape': 'triangle',
+              'control-point-step-size': '150px',
+              'curve-style': 'bezier',
+              'opacity': 0.9,
+              'width': '5',
+              'arrow-scale': 2.5,
+              // 'source-arrow-shape': 'circle',
+              // 'line-color': 'data(line_color)',
+              'color': 'white',
+              'text-outline-width': '3',
+              'text-outline-color': 'black',
+              'font-size': '24',
+              // 'source-arrow-color': 'data(source_color)',
+              // 'target-arrow-color': 'data(source_color)',
+              'edge-text-rotation': 'autorotate'
+            }
+          },
+          {
+            selector: ':selected',
+            css: {
+              'background-color': 'black',
+              'line-color': 'black',
+              'target-arrow-color': 'black',
+              'source-arrow-color': 'black'
+            }
+          }
+        ]
+      }
     }
   }
 }

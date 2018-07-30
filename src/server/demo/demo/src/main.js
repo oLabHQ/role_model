@@ -14,6 +14,8 @@ import { setContext } from 'apollo-link-context'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 import VueApollo from 'vue-apollo'
 
+import VueCytoscape from 'vue-cytoscape'
+
 const httpLink = new HttpLink({
   uri: 'http://localhost:8000/demo/graphql',
   credentials: 'include'
@@ -70,6 +72,7 @@ const apolloProvider = new VueApollo({
 })
 
 Vue.use(VueApollo)
+Vue.use(VueCytoscape)
 Vue.use(BootstrapVue)
 
 Vue.filter('formatDate', function (value) {

@@ -40,6 +40,7 @@ a {
     display: block;
     position: relative;
     text-align: left;
+    cursor: pointer;
 }
 
 a:hover {

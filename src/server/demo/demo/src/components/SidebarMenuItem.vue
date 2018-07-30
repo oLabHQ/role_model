@@ -11,14 +11,16 @@
 export default {
   props: {
     href: {
-      type: String,
-      default: '#'
+      default: false
     }
   }
 }
 </script>
 
 <style scoped>
+li {
+  cursor: default;
+}
 a {
     padding: 10px;
     font-size: 1.1em;

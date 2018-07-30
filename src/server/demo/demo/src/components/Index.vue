@@ -6,10 +6,10 @@
         <SidebarMenuItem  v-if="appliedEvents.length > 0" href="#">
           {{ currentDate }}
         </SidebarMenuItem>
-        <SidebarMenuItem  v-else href="#">
+        <SidebarMenuItem  v-else style="background: #FF5470">
           Move the slider <span style="float: right">⬇</span>
         </SidebarMenuItem>
-        <SidebarMenuItem href="#">
+        <SidebarMenuItem>
           Event: {{ cursor }} of {{ (displayEvents || []).length }}
           <br/>
           <input
@@ -482,6 +482,7 @@ export default {
 <style scoped>
 input {
   width: 100%;
+  cursor: pointer;
 }
 
 div {

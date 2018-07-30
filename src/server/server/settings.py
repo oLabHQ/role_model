@@ -98,6 +98,7 @@ HISTORY_MODELS = [
     'role_model.Format',
     'role_model.Group',
     'role_model.Responsibility',
+    'role_model.ResponsibilityInputType',
     'role_model.Role',
     'crm.Organization',
     'crm.User'

@@ -38,10 +38,12 @@ class Deliverable(IsDeletedModel, Ownership, NameSlugTimeStampedUUIDModel,
         facets = self.facets.all()
         content_types = self.content_types.all()
         responsibilities = Responsibility.objects.filter(
-            Q(input_types__in=content_types),
+            Q(input_types__in=content_types) |
             Q(output_type__in=content_types)).all()
         roles = Role.objects.filter(responsibilities__in=responsibilities)
         assignments = Assignment.objects.filter(
+            Q(responsibility__in=responsibilities))
+        responsibility_input_types = ResponsibilityInputType.objects.filter(
             Q(responsibility__in=responsibilities))
 
         return History.objects.filter(
@@ -50,6 +52,8 @@ class Deliverable(IsDeletedModel, Ownership, NameSlugTimeStampedUUIDModel,
             Q(role_model_facet__in=facets) |
             Q(role_model_contenttype__in=content_types) |
             Q(role_model_responsibility__in=responsibilities) |
+            Q(role_model_responsibilityinputtype__in=
+                responsibility_input_types) |
             Q(role_model_role__in=roles) |
             Q(role_model_group__roles__in=roles) |
             Q(role_model_assignment__in=assignments)).all()
@@ -87,7 +91,8 @@ class Format(IsDeletedModel, NameSlugTimeStampedUUIDModel,
         return self.deliverable.organization
 
 
-class Facet(IsDeletedModel, NameSlugTimeStampedUUIDModel, metaclass=AldjemyMeta):
+class Facet(IsDeletedModel, NameSlugTimeStampedUUIDModel,
+            metaclass=AldjemyMeta):
     """
     One face of the product, or product's data.
     For example, a product may have the following facets:

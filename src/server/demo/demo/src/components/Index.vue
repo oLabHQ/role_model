@@ -18,8 +18,6 @@
             min="0"
             :max="displayEvents.length"/>
         </SidebarMenuItem>
-        <SidebarMenuItem
-          href="http://google.com">Organization Chart</SidebarMenuItem>
         <SidebarSubmenu name="Roles">
           <SidebarSubmenuItem
             href="#"
@@ -51,6 +49,8 @@ import SidebarSubmenu from './SidebarSubmenu.vue'
 import SidebarMenuItem from './SidebarMenuItem.vue'
 import SidebarSubmenuItem from './SidebarSubmenuItem.vue'
 
+const uuidv4 = require('uuid/v4')
+
 export default {
   name: 'Graph',
   props: {
@@ -81,16 +81,47 @@ export default {
     }`
   },
   methods: {
-    pushNode (cy, node) {
+    toggleNode (nodeId, isHidden) {
+      this.$cytoscape.instance.then(cy => {
+        const elements = cy.elements('node[id="' + nodeId + '"]')
+        if (isHidden) {
+          elements.hide()
+        } else {
+          elements.show()
+        }
+      })
+    },
+    pushNode (cy, data) {
       this.elements.push(cy.add({
-        data: node
+        data: data
       }))
+    },
+    pushEdges (cy, data) {
+      this.numberOfEdges.push(data.length)
+      data.forEach((datum) => {
+        this.elements.push(cy.add({
+          data: datum
+        }))
+      })
+    },
+    popEdges (cy, data) {
+      const count = this.numberOfEdges.pop()
+      for (var i = 0; i < count; i++) {
+        cy.remove(this.elements.pop())
+      }
     },
     popNode (cy) {
       cy.remove(this.elements.pop())
     },
     runLayout (cy) {
       cy.layout(this.layout).run()
+    },
+    inputTypes (responsibility) {
+      var responsibilities = this.responsibilityInputTypes[responsibility] || {}
+      return Object.keys(responsibilities).map((pk) => responsibilities[pk])
+    },
+    roleColor (role) {
+      return this.group_colors[role.fields.group]
     },
     pushEvent (e) {
       this.appliedEvents.push(e)
@@ -104,6 +135,7 @@ export default {
           var color
           switch (e.instance.model) {
             case 'role_model.role':
+              this.roles.push(instance.pk)
               color = this.group_colors[instance.fields.group]
               node = {
                 id: instance.pk,
@@ -125,6 +157,64 @@ export default {
               }
               this.pushNode(cy, node)
               break
+            case 'role_model.responsibilityinputtype':
+              const responsibilityId = e.instance.fields.responsibility
+              if (!(responsibilityId in this.responsibilityInputTypes)) {
+                this.$set(this.responsibilityInputTypes, responsibilityId, {})
+              }
+              this.$set(
+                this.responsibilityInputTypes[responsibilityId],
+                e.instance.pk, this.data[e.instance.fields.content_type])
+              break
+            case 'role_model.assignment':
+              const role = this.data[instance.fields.role]
+              const responsibility = this.data[instance.fields.responsibility]
+              const outputType = this.data[responsibility.fields.output_type]
+              const inputTypes = this.inputTypes(
+                instance.fields.responsibility)
+
+              if (!(outputType.pk in this.rolesWithOutputType)) {
+                this.$set(this.rolesWithOutputType, outputType.pk, [])
+              }
+              if (!(outputType.pk in this.rolesWithInputType)) {
+                this.$set(this.rolesWithInputType, outputType.pk, [])
+              }
+
+              this.rolesWithOutputType[outputType.pk].push(role)
+              inputTypes.forEach((inputType) => {
+                if (!(inputType.pk in this.rolesWithInputType)) {
+                  this.$set(this.rolesWithInputType, inputType.pk, [])
+                }
+                this.rolesWithInputType[inputType.pk].push(role)
+              })
+
+              const pendingEdges = []
+              inputTypes.forEach((inputType) => {
+                if (inputType.pk in this.rolesWithOutputType) {
+                  const inputRoles = this.rolesWithOutputType[inputType.pk]
+                  inputRoles.forEach((inputRole) => {
+                    color = this.group_colors[instance.fields.group]
+                    pendingEdges.push({
+                      'id': uuidv4(),
+                      'name': [
+                        this.data[inputType.fields.facet].fields.name,
+                        this.data[inputType.fields.format].fields.name
+                      ].join(' :: '),
+                      'source': inputRole.pk,
+                      'target': role.pk,
+                      'source_color': this.roleColor(inputRole),
+                      'target_color': this.roleColor(role),
+                      'classes': 'autorotate',
+                      'line_color': '#666'
+                    })
+                  })
+                  if (inputRoles.length === 0) {
+                    console.log('No input role')
+                  }
+                }
+              })
+              this.pushEdges(cy, pendingEdges)
+              break
           }
           this.runLayout(cy)
         })
@@ -135,6 +225,9 @@ export default {
             const change = e.changes[field]
             const valueTo = change[0]
             this.data[e.instance.pk].fields[field] = valueTo
+            if (field === 'is_deleted') {
+              this.toggleNode(e.instance.pk, valueTo)
+            }
           }
         }
       }
@@ -142,22 +235,45 @@ export default {
     popEvent () {
       var e = this.appliedEvents.pop()
       if (e.event === 'created') {
-        delete this.data[e.pk]
+        this.$delete(this.data, e.instance.pk)
         if (e.instance.model === 'role_model.role' ||
             e.instance.model === 'role_model.group') {
-          this.roles.pop()
           this.$cytoscape.instance.then(cy => {
             this.popNode(cy)
             this.runLayout(cy)
           })
         }
+        if (e.instance.model === 'role_model.role') {
+          this.roles.pop()
+        }
+        if (e.instance.model === 'role_model.group') {
+          this.$delete(this.group_colors, e.instance.pk)
+        }
+        if (e.instance.model === 'role_model.assignment') {
+          const responsibility = this.data[e.instance.fields.responsibility]
+          const outputType = this.data[responsibility.fields.output_type]
+          const inputTypes = this.inputTypes(e.instance.fields.responsibility)
+
+          inputTypes.forEach((inputType) => {
+            this.rolesWithInputType[inputType.pk].pop()
+          })
+
+          this.rolesWithOutputType[outputType.pk].pop()
+          this.$cytoscape.instance.then(cy => {
+            this.popEdges(cy)
+          })
+        }
       }
+
       if (e.event === 'modified') {
         for (var field in e.changes) {
           if (e.changes.hasOwnProperty(field)) {
             const change = e.changes[field]
             const valueFrom = change[1]
             this.data[e.instance.pk].fields[field] = valueFrom
+            if (field === 'is_deleted') {
+              this.toggleNode(e.instance.pk, valueFrom)
+            }
           }
         }
       }
@@ -252,11 +368,15 @@ export default {
       data: {},
       roles: [],
       group_colors: {},
+      numberOfEdges: [],
       elements: [],
       appliedEvents: [],
       previousCursor: 0,
       currentIndex: 0,
       organizationEvents: [],
+      responsibilityInputTypes: {},
+      rolesWithInputType: {},
+      rolesWithOutputType: {},
       cursor: 0,
       colors: [
         '#6FB1FC',
@@ -290,11 +410,16 @@ export default {
             }
           },
           {
+            selector: '[name]',
+            css: {
+              'content': 'data(name)'
+            }
+          },
+          {
             selector: 'node',
             css: {
               'shape': 'roundrectangle',
               'padding': '5',
-              'content': 'data(name)',
               'text-valign': 'center',
               'text-outline-width': 2,
               'color': '#fff',
@@ -321,21 +446,20 @@ export default {
           {
             selector: 'edge',
             css: {
-              // 'content': 'data(name)',
               'target-arrow-shape': 'triangle',
               'control-point-step-size': '150px',
               'curve-style': 'bezier',
               'opacity': 0.9,
               'width': '5',
               'arrow-scale': 2.5,
-              // 'source-arrow-shape': 'circle',
-              // 'line-color': 'data(line_color)',
+              'source-arrow-shape': 'circle',
+              'line-color': 'data(line_color)',
               'color': 'white',
               'text-outline-width': '3',
               'text-outline-color': 'black',
               'font-size': '24',
-              // 'source-arrow-color': 'data(source_color)',
-              // 'target-arrow-color': 'data(source_color)',
+              'source-arrow-color': 'data(source_color)',
+              'target-arrow-color': 'data(source_color)',
               'edge-text-rotation': 'autorotate'
             }
           },

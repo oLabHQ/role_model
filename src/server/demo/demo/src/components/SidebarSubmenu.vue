@@ -1,16 +1,15 @@
 <template>
   <li>
     <a
-        href="#"
         aria-expanded="false"
         class="dropdown-toggle"
         v-b-toggle="submenuId">
       <i></i>
       {{ name }}
     </a>
-    <b-collapse :id="submenuId">
+    <b-collapse visible :id="submenuId">
       <ul class="list-unstyled">
-          <slot></slot>
+        <slot></slot>
       </ul>
     </b-collapse>
   </li>
@@ -44,7 +43,7 @@ a {
 }
 
 a:hover {
-    color: #7386D5;
+    color: #7386D5 !important;
     background: #fff;
     text-decoration: none;
     transition: all 0.3s;
@@ -56,7 +55,7 @@ i {
 
 li.active > a,
 a[aria-expanded="true"] {
-    color: #fff;
+    color: #fff !important;
     background: #6d7fcc;
 }
 

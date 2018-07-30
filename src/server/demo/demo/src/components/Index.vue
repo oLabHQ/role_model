@@ -2,7 +2,22 @@
   <div>
     <Sidebar
       heading="Acme Ltd">
-      <SidebarMenu>
+      <SidebarMenu v-if="displayEvents.length > 0">
+        <SidebarMenuItem  v-if="appliedEvents.length > 0" href="#">
+          {{ currentDate }}
+        </SidebarMenuItem>
+        <SidebarMenuItem  v-else href="#">
+          Move the slider <span style="float: right">⬇</span>
+        </SidebarMenuItem>
+        <SidebarMenuItem href="#">
+          Event: {{ cursor }} of {{ (displayEvents || []).length }}
+          <br/>
+          <input
+            type="range"
+            v-model="cursor"
+            min="0"
+            :max="displayEvents.length"/>
+        </SidebarMenuItem>
         <SidebarMenuItem
           href="http://google.com">Organization Chart</SidebarMenuItem>
         <SidebarSubmenu name="Roles">
@@ -11,16 +26,24 @@
           <SidebarSubmenuItem
             href="http://google.com">Test</SidebarSubmenuItem>
         </SidebarSubmenu>
+        <SidebarSubmenu name="Events">
+          <SidebarSubmenuItem
+            v-bind:key="e.pk"
+            v-for="e in appliedEvents"
+            href="#">{{ e.event }} {{ e.instance.model.split(".")[1] }} on {{ e.created | formatDate }}</SidebarSubmenuItem>
+        </SidebarSubmenu>
       </SidebarMenu>
     </Sidebar>
     <div id="content">
-      {{ organizationEvents }}
+      {{ currentIndex }}
+      {{ appliedEvents.length }}
     </div>
   </div>
 </template>
 
 <script>
 import gql from 'graphql-tag'
+import moment from 'moment'
 
 import Sidebar from './Sidebar.vue'
 import SidebarMenu from './SidebarMenu.vue'
@@ -43,23 +66,123 @@ export default {
   apollo: {
     organizationEvents: gql`{
       organizationEvents {
-        id,
-        fields,
-        event,
-        instance
+        pk
+        event
+        created
+        serializedInstance {
+          pk
+          model
+          fields
+        }
+        instance @client
       }
     }`
   },
+  methods: {
+    pushEvent (e) {
+      this.appliedEvents.push(e)
+      if (e.event === 'created') {
+        this.data[e.pk] = e.instance
+      }
+    },
+    popEvent () {
+      var e = this.appliedEvents.pop()
+      if (e.event === 'created') {
+        delete this.data[e.pk]
+      }
+    },
+    applyDelta (delta) {
+      if (delta > 0) {
+        const nextIndex = this.nextIndex
+        for (var i = this.appliedEvents.length;
+          i <= nextIndex; i++) {
+          this.pushEvent(this.organizationEvents[i])
+        }
+      } else if (delta < 0) {
+        const previousIndex = this.previousIndex
+        for (var j = this.appliedEvents.length;
+          j > (previousIndex || -1) + 1; j--) {
+          this.popEvent()
+        }
+      }
+    }
+  },
+  watch: {
+    cursor (value) {
+      const delta = value - this.previousCursor
+      if (delta !== 0) {
+        this.applyDelta(delta)
+      }
+      this.previousCursor = value
+    }
+  },
+  computed: {
+    eventsIndex () {
+      const eventsIndexObject = {}
+      this.organizationEvents.forEach((e, index) => {
+        eventsIndexObject[e.pk] = index
+      })
+      return eventsIndexObject
+    },
+    displayEvents () {
+      return (this.organizationEvents || []).filter((e, index) => {
+        const isDisplayed = [
+          'role_model.group',
+          'role_model.role',
+          'role_model.assignment'
+        ].indexOf(e.instance.model) !== -1
+        return isDisplayed
+      })
+    },
+    nextIndex () {
+      if (this.currentEvent) {
+        return this.eventsIndex[this.currentEvent.pk]
+      }
+    },
+    previousIndex () {
+      if (this.previousEvent) {
+        return this.eventsIndex[this.previousEvent.pk]
+      }
+    },
+    previousEvent () {
+      if (this.cursor < 1) {
+        return null
+      }
+      return this.displayEvents[this.cursor - 1]
+    },
+    currentEvent () {
+      if (this.cursor === 0) {
+        return null
+      }
+      return this.displayEvents[this.cursor - 1]
+    },
+    currentDate () {
+      if (this.currentEvent) {
+        return (moment(this.currentEvent.created)
+          .format('Do MMMM YYYY'))
+      }
+    }
+  },
   data () {
     return {
-      organizationEvents: []
+      data: {},
+      roles: [],
+      appliedEvents: [],
+      previousCursor: 0,
+      currentIndex: 0,
+      organizationEvents: [],
+      date: '1990-12-12',
+      cursor: 0
     }
   }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+input {
+  width: 100%;
+}
+
 div {
   display: flex;
   align-items: stretch;

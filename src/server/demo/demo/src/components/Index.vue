@@ -22,14 +22,15 @@
           href="http://google.com">Organization Chart</SidebarMenuItem>
         <SidebarSubmenu name="Roles">
           <SidebarSubmenuItem
-            href="http://google.com">Test</SidebarSubmenuItem>
-          <SidebarSubmenuItem
-            href="http://google.com">Test</SidebarSubmenuItem>
+            href="#"
+            v-bind:key="role.pk"
+            v-for="role in displayedRoles">{{ role.fields.name }}
+          </SidebarSubmenuItem>
         </SidebarSubmenu>
         <SidebarSubmenu name="Events">
           <SidebarSubmenuItem
             v-bind:key="e.pk"
-            v-for="e in appliedEvents"
+            v-for="e in appliedEvents.slice().reverse()"
             href="#">{{ e.event }} {{ e.instance.model.split(".")[1] }} on {{ e.created | formatDate }}</SidebarSubmenuItem>
         </SidebarSubmenu>
       </SidebarMenu>
@@ -69,6 +70,8 @@ export default {
         pk
         event
         created
+        serializedChanges
+        changes @client
         serializedInstance {
           pk
           model
@@ -82,13 +85,40 @@ export default {
     pushEvent (e) {
       this.appliedEvents.push(e)
       if (e.event === 'created') {
-        this.data[e.pk] = e.instance
+        var instance = Object.assign({}, e.instance);
+        instance.fields = Object.assign({}, e.instance.fields)
+        this.$set(this.data, e.instance.pk, instance)
+        if (e.instance.model === 'role_model.role') {
+          this.roles.push(instance.pk)
+        }
+      }
+      if (e.event === 'modified') {
+        for (var field in e.changes) {
+          if (e.changes.hasOwnProperty(field)) {
+            const change = e.changes[field]
+            const valueTo = change[0]
+            this.data[e.instance.pk].fields[field] = valueTo
+          }
+        }
       }
     },
     popEvent () {
       var e = this.appliedEvents.pop()
       if (e.event === 'created') {
         delete this.data[e.pk]
+        if (e.instance.model === 'role_model.role') {
+          this.roles.pop()
+        }
+      }
+      if (e.event === 'modified') {
+        for (var field in e.changes) {
+          if (e.changes.hasOwnProperty(field)) {
+            const change = e.changes[field]
+            const valueFrom = change[1]
+            this.data[e.instance.pk].fields[field] = valueFrom
+            console.log("Set valueFrom")
+          }
+        }
       }
     },
     applyDelta (delta) {
@@ -117,6 +147,10 @@ export default {
     }
   },
   computed: {
+    displayedRoles() {
+      return (this.roles.map((pk) => this.data[pk])
+        .filter((role) => !role.fields.is_deleted))
+    },
     eventsIndex () {
       const eventsIndexObject = {}
       this.organizationEvents.forEach((e, index) => {

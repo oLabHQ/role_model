@@ -19,7 +19,7 @@ class SerializedInstance(graphene.ObjectType):
 
 class History(DjangoObjectType):
     pk = graphene.String()
-    changes = graphene.JSONString()
+    serialized_changes = graphene.JSONString()
     event = graphene.String()
     serialized_instance = graphene.Field(SerializedInstance)
 
@@ -27,7 +27,7 @@ class History(DjangoObjectType):
         model = HistoryModel
         interfaces = (graphene.Node, )
 
-    def resolve_changes(self, info):
+    def resolve_serialized_changes(self, info):
         return dict(self.changes()) or None
 
     def resolve_event(self, info):

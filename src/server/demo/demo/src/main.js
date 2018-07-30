@@ -33,6 +33,13 @@ var cache = new InMemoryCache()
 
 const linkStateResolvers = {
   History: {
+    changes: (history, args, ctx) => {
+      const serializedChanges = history.serializedChanges
+      if (serializedChanges) {
+        return JSON.parse(serializedChanges)
+      }
+      return null
+    },
     instance: (history, args, ctx) => {
       const serializedInstance = history.serializedInstance
       if (serializedInstance) {

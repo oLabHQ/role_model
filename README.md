@@ -9,6 +9,14 @@ it's employees performed and the responsibilities assigned to each role.
 
 It's meant to be a DESCRIPTIVE tool, not a prescriptive one.
 
+# Up Next #
+
+* Fix linting
+* Finish demo data
+* Add final screen
+* Dockerfile
+* Deployment
+
 # TODO #
 * Replace Makefile with Docker devops.
 * Re-factor views, graph generating code with some design patterns.

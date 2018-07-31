@@ -14,7 +14,8 @@ from role_model.models import (
     ContentType,
     Assignment,
     Role,
-    Responsibility,)
+    Responsibility,
+    ResponsibilityInputType)
 
 
 class OwnershipAdminMixin:
@@ -271,3 +272,4 @@ admin.site.register(ContentType, ContentTypeAdmin)
 admin.site.register(Assignment, AssignmentAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Responsibility, ResponsibilityAdmin)
+admin.site.register(ResponsibilityInputType, admin.ModelAdmin)

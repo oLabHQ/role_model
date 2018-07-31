@@ -29,6 +29,9 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('status', django_fsm.FSMField(choices=[(role_model.models.Status('formal'), 'formal'), (role_model.models.Status('ad_hoc'), 'ad_hoc'), (role_model.models.Status('adjunct'), 'adjunct')], default=role_model.models.Status('formal'), max_length=50)),
             ],
+            options={
+                'base_manager_name': 'objects',
+            },
         ),
         migrations.CreateModel(
             name='ContentType',

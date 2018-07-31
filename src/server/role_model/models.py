@@ -56,7 +56,8 @@ class Deliverable(IsDeletedModel, Ownership, NameSlugTimeStampedUUIDModel,
                 responsibility_input_types) |
             Q(role_model_role__in=roles) |
             Q(role_model_group__roles__in=roles) |
-            Q(role_model_assignment__in=assignments)).all().distinct()
+            Q(role_model_assignment__in=assignments)).all() \
+                .distinct('id').order_by('-id')
 
 
 class GroupManager(IsDeletedManager, models.Manager):
@@ -283,6 +284,10 @@ class Assignment(IsDeletedModel, TimeStampedUUIDModel,
 
     class Meta:
         unique_together = [('role', 'responsibility')]
+        base_manager_name = 'objects'
+
+    def __str__(self):
+        return "{}, {}".format(str(self.role.name), str(self.responsibility))
 
     @property
     def organization(self):

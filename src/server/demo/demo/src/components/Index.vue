@@ -49,8 +49,6 @@ import SidebarSubmenu from './SidebarSubmenu.vue'
 import SidebarMenuItem from './SidebarMenuItem.vue'
 import SidebarSubmenuItem from './SidebarSubmenuItem.vue'
 
-import * as uuidv4 from 'uuid/v4'
-
 export default {
   name: 'Graph',
   props: {
@@ -81,15 +79,13 @@ export default {
     }`
   },
   methods: {
-    toggleElement (nodeId, isHidden) {
-      this.$cytoscape.instance.then(cy => {
-        const elements = cy.elements('[id="' + nodeId + '"]')
-        if (isHidden) {
-          elements.hide()
-        } else {
-          elements.show()
-        }
-      })
+    toggleElement (cy, nodeId, isHidden) {
+      const elements = cy.elements('[id="' + nodeId + '"]')
+      if (isHidden) {
+        elements.hide()
+      } else {
+        elements.show()
+      }
     },
     pushNode (cy, data) {
       this.elements.push(cy.add({
@@ -97,12 +93,25 @@ export default {
       }))
     },
     pushEdges (cy, data) {
-      this.numberOfEdges.push(data.length)
       data.forEach((datum) => {
-        this.elements.push(cy.add({
-          data: datum
-        }))
+        const edgeId = [
+          datum.source,
+          datum.target,
+          datum.content_type
+        ].join(',')
+        datum.id = edgeId
       })
+
+      var numberOfEdges = 0
+      data.forEach((datum) => {
+        if (cy.elements('[id="' + datum.id + '"]').length === 0) {
+          this.elements.push(cy.add({
+            data: datum
+          }))
+          numberOfEdges++
+        }
+      })
+      this.numberOfEdges.push(numberOfEdges)
     },
     popEdges (cy, data) {
       const count = this.numberOfEdges.pop()
@@ -189,24 +198,26 @@ export default {
               })
 
               const pendingEdges = []
+
               inputTypes.forEach((inputType) => {
                 if (inputType.pk in this.rolesWithOutputType) {
                   const inputRoles = this.rolesWithOutputType[inputType.pk]
                   inputRoles.forEach((inputRole) => {
                     color = this.group_colors[instance.fields.group]
-                    pendingEdges.push({
-                      'id': uuidv4(),
+                    const edgeDatum = {
                       'name': [
                         this.data[inputType.fields.facet].fields.name,
                         this.data[inputType.fields.format].fields.name
                       ].join(' :: '),
                       'source': inputRole.pk,
                       'target': role.pk,
+                      'content_type': inputType.pk,
                       'source_color': this.roleColor(inputRole),
                       'target_color': this.roleColor(role),
                       'classes': 'autorotate',
                       'line_color': '#666'
-                    })
+                    }
+                    pendingEdges.push(edgeDatum)
                   })
                   if (inputRoles.length === 0) {
                     console.log('No input role')
@@ -221,70 +232,75 @@ export default {
         })
       }
       if (e.event === 'modified') {
-        for (var field in e.changes) {
-          if (e.changes.hasOwnProperty(field)) {
-            const change = e.changes[field]
-            const valueTo = change[0]
-            this.data[e.instance.pk].fields[field] = valueTo
-            if (field === 'is_deleted') {
-              switch (e.instance.model) {
-                case 'role_model.assignment':
-                  this.edges[e.instance.pk].forEach((edge) => {
-                    this.toggleElement(edge.id, valueTo)
-                  })
-                default:
-                  this.toggleElement(e.instance.pk, valueTo)
+        this.$cytoscape.instance.then(cy => {
+          for (var field in e.changes) {
+            if (e.changes.hasOwnProperty(field)) {
+              const change = e.changes[field]
+              const valueTo = change[0]
+              this.data[e.instance.pk].fields[field] = valueTo
+              if (field === 'is_deleted') {
+                switch (e.instance.model) {
+                  case 'role_model.assignment':
+                    this.edges[e.instance.pk].forEach((edge) => {
+                      this.toggleElement(cy, edge.id, valueTo)
+                    })
+                    break
+                  default:
+                    this.toggleElement(cy, e.instance.pk, valueTo)
+                }
               }
             }
           }
-        }
+        })
       }
     },
     popEvent () {
       var e = this.appliedEvents.pop()
-      if (e.event === 'created') {
-        this.$delete(this.data, e.instance.pk)
-        if (e.instance.model === 'role_model.role' ||
-            e.instance.model === 'role_model.group') {
-          this.$cytoscape.instance.then(cy => {
-            this.popNode(cy)
-            this.runLayout(cy)
-          })
-        }
-        if (e.instance.model === 'role_model.role') {
-          this.roles.pop()
-        }
-        if (e.instance.model === 'role_model.group') {
-          this.$delete(this.group_colors, e.instance.pk)
-        }
-        if (e.instance.model === 'role_model.assignment') {
-          const responsibility = this.data[e.instance.fields.responsibility]
-          const outputType = this.data[responsibility.fields.output_type]
-          const inputTypes = this.inputTypes(e.instance.fields.responsibility)
+      this.$cytoscape.instance.then(cy => {
+        if (e.event === 'created') {
+          if (e.instance.model === 'role_model.role' ||
+              e.instance.model === 'role_model.group') {
+            this.$cytoscape.instance.then(cy => {
+              this.popNode(cy)
+              this.runLayout(cy)
+            })
+          }
+          if (e.instance.model === 'role_model.role') {
+            this.roles.pop()
+          }
+          if (e.instance.model === 'role_model.group') {
+            this.$delete(this.group_colors, e.instance.pk)
+          }
+          if (e.instance.model === 'role_model.assignment') {
+            const responsibility = this.data[e.instance.fields.responsibility]
+            const outputType = this.data[responsibility.fields.output_type]
+            const inputTypes = this.inputTypes(e.instance.fields.responsibility)
 
-          inputTypes.forEach((inputType) => {
-            this.rolesWithInputType[inputType.pk].pop()
-          })
+            inputTypes.forEach((inputType) => {
+              this.rolesWithInputType[inputType.pk].pop()
+            })
 
-          this.rolesWithOutputType[outputType.pk].pop()
-          this.$cytoscape.instance.then(cy => {
-            this.popEdges(cy)
-          })
+            this.rolesWithOutputType[outputType.pk].pop()
+            this.$cytoscape.instance.then(cy => {
+              this.popEdges(cy)
+            })
+          }
+          this.$delete(this.data, e.instance.pk)
         }
-      }
 
-      if (e.event === 'modified') {
-        for (var field in e.changes) {
-          if (e.changes.hasOwnProperty(field)) {
-            const change = e.changes[field]
-            const valueFrom = change[1]
-            this.data[e.instance.pk].fields[field] = valueFrom
-            if (field === 'is_deleted') {
-              this.toggleElement(e.instance.pk, valueFrom)
+        if (e.event === 'modified') {
+          for (var field in e.changes) {
+            if (e.changes.hasOwnProperty(field)) {
+              const change = e.changes[field]
+              const valueFrom = change[1]
+              this.data[e.instance.pk].fields[field] = valueFrom
+              if (field === 'is_deleted') {
+                this.toggleElement(cy, e.instance.pk, valueFrom)
+              }
             }
           }
         }
-      }
+      })
     },
     applyDelta (delta) {
       if (delta > 0) {

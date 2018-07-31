@@ -196,66 +196,66 @@ class Command(BaseCommand):
                 (GROUP_PRODUCT, FACET_UI, FORMAT_REQUIREMENTS))
 
             self.add_role(ROLE_DESIGN, GROUP_PRODUCT)
-            # self.add_assignment(ROLE_DESIGN,
-            #                     'design_concepts')
-            #
-            # self.delete_assignment(ROLE_NON_TECH_FOUNDER, 'refine_concepts')
-            # self.delete_assignment(ROLE_TECH_FOUNDER, 'refine_concepts')
-            # self.add_responsibility('build_plan', [
-            #         (GROUP_PRODUCT, FACET_UI, FORMAT_REQUIREMENTS)
-            #     ],
-            #     (GROUP_PRODUCT, FACET_UI, FORMAT_IMPLEMENTATION_PLAN))
-            # self.add_assignment(ROLE_TECH_FOUNDER,
-            #                     'build_plan')
-            #
-            # self.add_responsibility('write_code', [
-            #         (GROUP_PRODUCT, FACET_UI, FORMAT_IMPLEMENTATION_PLAN)
-            #     ],
-            #     (GROUP_PRODUCT, FACET_UI, FORMAT_TEST_PRODUCT))
-            # self.add_assignment(ROLE_TECH_FOUNDER,
-            #                     'write_code')
-            #
-            # self.add_responsibility('pre_prod_test', [
-            #         (GROUP_PRODUCT, FACET_UI, FORMAT_TEST_PRODUCT)
-            #     ],
-            #     (GROUP_PRODUCT, FACET_UI, FORMAT_TEST))
-            # self.add_assignment(ROLE_TECH_FOUNDER,
-            #                     'pre_prod_test')
-            # self.add_assignment(ROLE_NON_TECH_FOUNDER,
-            #                     'pre_prod_test')
-            #
-            # self.add_responsibility('prod_deployment', [
-            #         (GROUP_PRODUCT, FACET_UI, FORMAT_TEST)
-            #     ],
-            #     (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYMENT))
-            # self.add_assignment(ROLE_TECH_FOUNDER,
-            #                     'prod_deployment')
-            #
-            # self.add_responsibility('deployed_product', [
-            #         (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYMENT)
-            #     ],
-            #     (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT))
-            # self.add_assignment(ROLE_TECH_FOUNDER,
-            #                     'deployed_product')
-            #
-            # self.add_responsibility('focus_group_test_invite', [
-            #         (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT)
-            #     ],
-            #     (GROUP_PRODUCT, FACET_UI, FORMAT_MEETING_INVITE))
-            # self.add_assignment(ROLE_NON_TECH_FOUNDER,
-            #                     'focus_group_test_invite')
-            # self.add_assignment(ROLE_LEAD,
-            #                     'accept_meeting')
-            # self.add_assignment(ROLE_NON_TECH_FOUNDER, 'refine_concepts')
-            # self.add_assignment(ROLE_TECH_FOUNDER, 'refine_concepts')
+            self.add_assignment(ROLE_DESIGN,
+                                'design_concepts')
 
-            # self.add_assignment(ROLE_LEAD,
-            #                     'refine_concepts')
+            self.delete_assignment(ROLE_NON_TECH_FOUNDER, 'refine_concepts')
+            self.delete_assignment(ROLE_TECH_FOUNDER, 'refine_concepts')
+            self.add_responsibility('build_plan', [
+                    (GROUP_PRODUCT, FACET_UI, FORMAT_REQUIREMENTS)
+                ],
+                (GROUP_PRODUCT, FACET_UI, FORMAT_IMPLEMENTATION_PLAN))
+            self.add_assignment(ROLE_TECH_FOUNDER,
+                                'build_plan')
 
+            self.add_responsibility('write_code', [
+                    (GROUP_PRODUCT, FACET_UI, FORMAT_IMPLEMENTATION_PLAN)
+                ],
+                (GROUP_PRODUCT, FACET_UI, FORMAT_TEST_PRODUCT))
+            self.add_assignment(ROLE_TECH_FOUNDER,
+                                'write_code')
 
+            self.add_responsibility('pre_prod_test', [
+                    (GROUP_PRODUCT, FACET_UI, FORMAT_TEST_PRODUCT)
+                ],
+                (GROUP_PRODUCT, FACET_UI, FORMAT_TEST))
+            self.add_assignment(ROLE_TECH_FOUNDER,
+                                'pre_prod_test')
+            self.add_assignment(ROLE_NON_TECH_FOUNDER,
+                                'pre_prod_test')
 
+            self.add_responsibility('prod_deployment', [
+                    (GROUP_PRODUCT, FACET_UI, FORMAT_TEST)
+                ],
+                (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYMENT))
+            self.add_assignment(ROLE_TECH_FOUNDER,
+                                'prod_deployment')
 
+            self.add_responsibility('deployed_product', [
+                    (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYMENT)
+                ],
+                (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT))
+            self.add_assignment(ROLE_TECH_FOUNDER,
+                                'deployed_product')
 
+            self.add_responsibility('focus_group_test_invite', [
+                    (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT)
+                ],
+                (GROUP_PRODUCT, FACET_UI, FORMAT_MEETING_INVITE))
+            self.add_assignment(ROLE_NON_TECH_FOUNDER,
+                                'focus_group_test_invite')
+            self.add_assignment(ROLE_LEAD,
+                                'accept_meeting')
+            self.add_assignment(ROLE_NON_TECH_FOUNDER, 'refine_concepts')
+            self.add_assignment(ROLE_TECH_FOUNDER, 'refine_concepts')
+
+            self.delete_assignment(ROLE_TECH_FOUNDER, 'build_plan',
+                                   'write_code', 'prod_deployment',
+                                   'deployed_product')
+            self.add_role(ROLE_ENGINEER, GROUP_PRODUCT)
+            self.add_assignment(ROLE_ENGINEER, 'build_plan',
+                                   'write_code', 'prod_deployment',
+                                   'deployed_product')
 
     #         ROLE_DESIGN
     # ROLE_ENGINEER
@@ -350,7 +350,7 @@ class Command(BaseCommand):
             Assignment.objects.get(
                 role=self.roles[role],
                 responsibility=self.responsibilities[responsibility]
-            ).mark_as_deleted()
+            ).mark_as_deleted(save=True)
 
     def add_assignment(self, role, *responsibilities):
         self.increment_date()

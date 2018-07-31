@@ -251,11 +251,15 @@ class Command(BaseCommand):
 
             self.delete_assignment(ROLE_TECH_FOUNDER, 'build_plan',
                                    'write_code', 'prod_deployment',
-                                   'deployed_product')
+                                   'deployed_product', 'write_code',
+                                   'pre_prod_test')
+            self.delete_assignment(ROLE_NON_TECH_FOUNDER, 'focus_group_test_invite', 'pre_prod_test')
             self.add_role(ROLE_ENGINEER, GROUP_PRODUCT)
             self.add_assignment(ROLE_ENGINEER, 'build_plan',
                                    'write_code', 'prod_deployment',
-                                   'deployed_product')
+                                   'deployed_product', 'write_code',
+                                   'pre_prod_test')
+            self.add_assignment(ROLE_NON_TECH_FOUNDER, 'focus_group_test_invite', 'pre_prod_test')
 
     #         ROLE_DESIGN
     # ROLE_ENGINEER

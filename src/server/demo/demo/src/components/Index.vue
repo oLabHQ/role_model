@@ -183,25 +183,22 @@ export default {
                 instance.fields.responsibility)
 
               if (!(outputType.pk in this.rolesWithOutputType)) {
-                this.$set(this.rolesWithOutputType, outputType.pk, [])
-              }
-              if (!(outputType.pk in this.rolesWithInputType)) {
-                this.$set(this.rolesWithInputType, outputType.pk, [])
+                this.$set(this.rolesWithOutputType, outputType.pk, {})
               }
 
-              this.rolesWithOutputType[outputType.pk].push(role)
-              inputTypes.forEach((inputType) => {
-                if (!(inputType.pk in this.rolesWithInputType)) {
-                  this.$set(this.rolesWithInputType, inputType.pk, [])
-                }
-                this.rolesWithInputType[inputType.pk].push(role)
-              })
-
+              if (!this.rolesWithOutputType[outputType.pk][role.pk]) {
+                this.$set(this.rolesWithOutputType[outputType.pk], role.pk, 0)
+              }
+              this.rolesWithOutputType[outputType.pk][role.pk]++
               const pendingEdges = []
 
               inputTypes.forEach((inputType) => {
                 if (inputType.pk in this.rolesWithOutputType) {
-                  const inputRoles = this.rolesWithOutputType[inputType.pk]
+                  const inputRoles = Object.keys(
+                      this.rolesWithOutputType[inputType.pk])
+                    .filter((pk) =>
+                      this.rolesWithOutputType[inputType.pk][pk] > 0)
+                    .map((pk) => this.data[pk])
                   inputRoles.forEach((inputRole) => {
                     color = this.group_colors[instance.fields.group]
                     const edgeDatum = {
@@ -241,6 +238,15 @@ export default {
               if (field === 'is_deleted') {
                 switch (e.instance.model) {
                   case 'role_model.assignment':
+                    const role = this.data[e.instance.fields.role]
+                    const responsibility = this.data[e.instance.fields.responsibility]
+                    const outputType = this.data[responsibility.fields.output_type]
+                    if (valueTo) {
+                      this.rolesWithOutputType[outputType.pk][role.pk]--
+                    }
+                    else {
+                      this.rolesWithOutputType[outputType.pk][role.pk]++
+                    }
                     this.edges[e.instance.pk].forEach((edge) => {
                       this.toggleElement(cy, edge.id, valueTo)
                     })
@@ -275,12 +281,9 @@ export default {
             const responsibility = this.data[e.instance.fields.responsibility]
             const outputType = this.data[responsibility.fields.output_type]
             const inputTypes = this.inputTypes(e.instance.fields.responsibility)
+            const role = this.data[e.instance.fields.role]
 
-            inputTypes.forEach((inputType) => {
-              this.rolesWithInputType[inputType.pk].pop()
-            })
-
-            this.rolesWithOutputType[outputType.pk].pop()
+            this.rolesWithOutputType[outputType.pk][role.pk]--
             this.$cytoscape.instance.then(cy => {
               this.popEdges(cy)
             })
@@ -295,7 +298,18 @@ export default {
               const valueFrom = change[1]
               this.data[e.instance.pk].fields[field] = valueFrom
               if (field === 'is_deleted') {
-                this.toggleElement(cy, e.instance.pk, valueFrom)
+                switch (e.instance.model) {
+                  case 'role_model.assignment':
+                    const role = this.data[e.instance.fields.role]
+                    const responsibility = this.data[e.instance.fields.responsibility]
+                    const outputType = this.data[responsibility.fields.output_type]
+                    this.edges[e.instance.pk].forEach((edge) => {
+                      this.toggleElement(cy, edge.id, valueFrom)
+                    })
+                    break
+                  default:
+                    this.toggleElement(cy, e.instance.pk, valueFrom)
+                }
               }
             }
           }
@@ -400,7 +414,6 @@ export default {
       currentIndex: 0,
       organizationEvents: [],
       responsibilityInputTypes: {},
-      rolesWithInputType: {},
       rolesWithOutputType: {},
       cursor: 0,
       colors: [

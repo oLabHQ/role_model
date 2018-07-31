@@ -1,13 +1,13 @@
 <template>
   <div>
     <Sidebar
-      heading="Acme Ltd">
+      heading="Awesome Startup">
       <SidebarMenu v-if="displayEvents.length > 0">
-        <SidebarMenuItem  v-if="appliedEvents.length > 0" href="#">
+        <SidebarMenuItem  v-if="appliedEvents.length > 0">
           {{ currentDate }}
         </SidebarMenuItem>
         <SidebarMenuItem  v-else style="background: #FF5470">
-          Move the slider <span style="float: right">⬇</span>
+          Start your journey <span style="float: right">⬇</span>
         </SidebarMenuItem>
         <SidebarMenuItem>
           Event: {{ cursor }} of {{ (displayEvents || []).length }}
@@ -81,9 +81,9 @@ export default {
     }`
   },
   methods: {
-    toggleNode (nodeId, isHidden) {
+    toggleElement (nodeId, isHidden) {
       this.$cytoscape.instance.then(cy => {
-        const elements = cy.elements('node[id="' + nodeId + '"]')
+        const elements = cy.elements('[id="' + nodeId + '"]')
         if (isHidden) {
           elements.hide()
         } else {
@@ -213,6 +213,7 @@ export default {
                   }
                 }
               })
+              this.$set(this.edges, instance.pk, pendingEdges)
               this.pushEdges(cy, pendingEdges)
               break
           }
@@ -226,7 +227,14 @@ export default {
             const valueTo = change[0]
             this.data[e.instance.pk].fields[field] = valueTo
             if (field === 'is_deleted') {
-              this.toggleNode(e.instance.pk, valueTo)
+              switch (e.instance.model) {
+                case 'role_model.assignment':
+                  this.edges[e.instance.pk].forEach((edge) => {
+                    this.toggleElement(edge.id, valueTo)
+                  })
+                default:
+                  this.toggleElement(e.instance.pk, valueTo)
+              }
             }
           }
         }
@@ -272,7 +280,7 @@ export default {
             const valueFrom = change[1]
             this.data[e.instance.pk].fields[field] = valueFrom
             if (field === 'is_deleted') {
-              this.toggleNode(e.instance.pk, valueFrom)
+              this.toggleElement(e.instance.pk, valueFrom)
             }
           }
         }
@@ -367,6 +375,7 @@ export default {
       },
       data: {},
       roles: [],
+      edges: {},
       group_colors: {},
       numberOfEdges: [],
       elements: [],

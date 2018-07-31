@@ -56,7 +56,7 @@ class Deliverable(IsDeletedModel, Ownership, NameSlugTimeStampedUUIDModel,
                 responsibility_input_types) |
             Q(role_model_role__in=roles) |
             Q(role_model_group__roles__in=roles) |
-            Q(role_model_assignment__in=assignments)).all()
+            Q(role_model_assignment__in=assignments)).all().distinct()
 
 
 class GroupManager(IsDeletedManager, models.Manager):

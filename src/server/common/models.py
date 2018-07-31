@@ -18,10 +18,24 @@ class IsDeletedModel(models.Model):
         if save:
             self.save(update_fields=['is_deleted'])
 
+    def mark_as_undeleted(self, save=False):
+        self.is_deleted = False
+        if save:
+            self.save(update_fields=['is_deleted'])
+
 
 class IsDeletedManager(models.Manager):
     def undeleted(self):
         return self.filter(is_deleted=False)
+
+    def deleted(self):
+        return self.filter(is_deleted=True)
+
+    def undelete_or_create(self, *args, **kwargs):
+        instance, created = self.get_or_create(*args, **kwargs)
+        if instance.is_deleted:
+            instance.mark_as_undeleted(save=True)
+        return instance, created
 
 
 class UUIDModel(models.Model):

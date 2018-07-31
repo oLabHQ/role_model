@@ -58,4 +58,4 @@ def log_model_instance_delta(sender, instance=None, created=False, **kwargs):
     from history.models import History
 
     if model_is_registered(instance.__class__):
-        History.objects.append_history(instance)
+        History.objects.append_history(instance, created)

@@ -58,7 +58,8 @@ class HistoryManager(models.Manager):
     Reduces History Admin Change List page number of queries by 70%.
     """
     def get_queryset(self):
-        return super().get_queryset().prefetch_related('instance')
+        return super().get_queryset() \
+            .prefetch_related('instance')
 
     def previous(self, instance):
         """
@@ -68,7 +69,7 @@ class HistoryManager(models.Manager):
         """
         return self.filter(object_id=instance.id).order_by('-id').first()
 
-    def append_history(self, instance):
+    def append_history(self, instance, is_created=False):
         """
         Append to and return a history, a modification involving `instance`.
         A comparison is made between the instance and it's last known state.
@@ -85,6 +86,7 @@ class HistoryManager(models.Manager):
 
         return History.objects.create(
             instance=instance,
+            is_created=is_created,
             serialized_data=serialized_data,
             delta=json.loads(delta) if delta else None,
             migration_state=MigrationState.objects.add())
@@ -104,7 +106,7 @@ class History(TimeStampedModel):
     instance = GenericForeignKey('content_type', 'object_id')
     migration_state = models.ForeignKey('MigrationState',
                                         on_delete='CASCADE')
-
+    is_created = models.BooleanField(default=False)
     delta = JSONField(null=True, blank=True)
     serialized_data = JSONField()
 
@@ -141,6 +143,6 @@ class History(TimeStampedModel):
 
     @property
     def modification(self):
-        if not self.delta:
+        if self.is_created:
             return "created"
         return "modified"

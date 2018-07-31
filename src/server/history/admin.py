@@ -64,7 +64,7 @@ class HistoryAdmin(admin.ModelAdmin):
             html.append('</th>')
             html.append('<td>')
             html.append('{}')
-            html_args.append(" → ".join(reversed(values)))
+            html_args.append(" → ".join(reversed(list(map(str, values)))))
             html.append('</td>')
             html.append('</tr>')
         html.append('</table>')

@@ -33,8 +33,15 @@
         </SidebarSubmenu>
       </SidebarMenu>
     </Sidebar>
+    <div id="contact"
+        v-if="cursor == (displayEvents || []).length && cursor > 0">
+      <div class="block">
+        <h2><a href="mailto:hn@olab.com.au">hn@olab.com.au</a></h2>
+      </div>
+    </div>
     <div id="content">
-      <cytoscape :config="config"/>
+      <cytoscape
+        :config="config"/>
     </div>
   </div>
 </template>
@@ -79,7 +86,7 @@ export default {
     }`
   },
   methods: {
-    getElement(cy, nodeId) {
+    getElement (cy, nodeId) {
       return cy.getElementById(nodeId)
     },
     toggleElement (cy, nodeId, isHidden) {
@@ -136,7 +143,7 @@ export default {
       return Object.keys(
         this.edgeMeta.rolesWithOutputType[contentType.pk] ||
         {}).filter((rolePk) =>
-          this.edgeMeta.rolesWithOutputType[contentType.pk][rolePk] > 0)
+        this.edgeMeta.rolesWithOutputType[contentType.pk][rolePk] > 0)
         .map((rolePk) => {
           return this.data[rolePk]
         })
@@ -145,7 +152,7 @@ export default {
       return Object.keys(
         this.edgeMeta.rolesWithInputType[contentType.pk] ||
         {}).filter((rolePk) =>
-          this.edgeMeta.rolesWithInputType[contentType.pk][rolePk] > 0)
+        this.edgeMeta.rolesWithInputType[contentType.pk][rolePk] > 0)
         .map((rolePk) => {
           return this.data[rolePk]
         })
@@ -211,8 +218,8 @@ export default {
     },
     toggleEdges (cy, assignment, valueTo) {
       const role = this.data[assignment.fields.role]
-      const responsibility = this.data[assignment.fields.responsibility]
-      const outputType = this.data[responsibility.fields.output_type]
+      // const responsibility = this.data[assignment.fields.responsibility]
+      // const outputType = this.data[responsibility.fields.output_type]
       const inputTypes = this.inputTypes(assignment.fields.responsibility)
 
       if (valueTo) {
@@ -236,8 +243,7 @@ export default {
         //       this.hideEdge(cy, role, outputRole, outputType)
         //     }
         //   })
-      }
-      else {
+      } else {
         // this.incrementRoleOutputType(role, outputType)
         inputTypes.forEach((inputType) => {
           this.rolesWithOutputType(inputType).forEach((inputRole) => {
@@ -252,7 +258,6 @@ export default {
         //     this.showEdge(cy, role, outputRole, outputType)
         //   })
       }
-
     },
     edgeData (inputRole, role, contentType) {
       const edgeHash = this.edgeHash(inputRole, role, contentType)
@@ -368,7 +373,6 @@ export default {
         })
       }
       if (e.event === 'modified') {
-        const instance = e.instance
         this.$cytoscape.instance.then(cy => {
           for (var field in e.changes) {
             if (e.changes.hasOwnProperty(field)) {
@@ -378,7 +382,7 @@ export default {
               if (field === 'is_deleted') {
                 switch (e.instance.model) {
                   case 'role_model.assignment':
-                    this.toggleEdges(e.instance, valueTo)
+                    this.toggleEdges(cy, e.instance, valueTo)
                     break
                   default:
                     this.toggleElement(cy, e.instance.pk, valueTo)
@@ -435,7 +439,7 @@ export default {
               if (field === 'is_deleted') {
                 switch (e.instance.model) {
                   case 'role_model.assignment':
-                    this.toggleEdges(e.instance, valueFrom)
+                    this.toggleEdges(cy, e.instance, valueFrom)
                     break
                   default:
                     this.toggleElement(cy, e.instance.pk, valueFrom)
@@ -661,11 +665,34 @@ div {
   display: flex;
   align-items: stretch;
 }
-
+div.block {
+  display: block;
+  text-align: center;
+}
+#contact {
+  background: #4F86F7;
+  color: white;
+  display: table;
+}
+#contact h2 {
+  display: table-cell;
+  vertical-align: middle;
+}
+#contact ul {
+  list-style-type: none;
+  padding: 0;
+  font-size: 24px;
+}
+#contact a {
+  color: white;
+}
 #content {
-    width: 100%;
-    padding: 20px;
-    min-height: 100vh;
-    transition: all 0.3s;
+  display: block;
+}
+#content, #contact {
+  width: 100%;
+  padding: 20px;
+  min-height: 100vh;
+  transition: all 0.3s;
 }
 </style>

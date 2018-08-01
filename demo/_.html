@@ -1,0 +1,25 @@
+<!doctype html>
+<body>
+  <input id="cursor" min="0" max="{{ entries_count }}" step="1" type="range"
+         value="0">
+  <script>
+    var entries = {{ entries | safe }};
+    var displayed_entries = [];
+    var cursorValue = 0;
+    document.getElementById("cursor").onchange = function() {
+      var delta = this.value - cursorValue;
+      if (delta > 0) {
+        for (var i = cursorValue; i < this.value; i++) {
+          displayed_entries.push(entries[i]);
+        }
+      }
+      else if (delta < 0) {
+        for (var i = 0;i < Math.abs(delta); i++) {
+          displayed_entries.pop();
+        }
+      }
+      cursorValue = this.value;
+    };
+  </script>
+</body>
+</html>

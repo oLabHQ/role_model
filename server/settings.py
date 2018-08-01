@@ -32,7 +32,9 @@ DEBUG = True
 # https://stackoverflow.com/questions/6957016/detect-django-testing-mode
 TEST = sys.argv[1:2] == ['test']
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'aqueous-meadow-37878.herokuapp.com'
+]
 
 AUTH_USER_MODEL = 'crm.User'
 ROLE_MODEL_ORGANIZATION_MODEL = 'crm.Organization'

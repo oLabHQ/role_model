@@ -59,11 +59,13 @@ class Command(BaseCommand):
 
         GROUP_OPERATIONS = 'Operations'
         ROLE_NON_TECH_FOUNDER = 'non-technical co-founder'
+        ROLE_SUPPORT = 'customer support'
 
         GROUP_PRODUCT = 'Product'
         ROLE_TECH_FOUNDER = 'technical co-founder'
         ROLE_DESIGN = 'UX designer'
         ROLE_ENGINEER = 'Software Engineer'
+        ROLE_CUSTOMER = 'Customer'
 
         GROUP_ASSOCIATES = 'Associates'
         ROLE_FRIEND = 'friend'
@@ -83,6 +85,8 @@ class Command(BaseCommand):
         FORMAT_TEST = 'Test'
         FORMAT_DEPLOYMENT = 'Deployment'
         FORMAT_DEPLOYED_PRODUCT = 'Deployed Product'
+        FORMAT_USER_QUERY = 'User Query'
+        FORMAT_USER_RESPONSE = 'Response'
         FORMAT_PRESENTATION = 'Presentation'
         FORMAT_APPLICATION = 'Application'
         FORMAT_OFFER = 'Offer'
@@ -92,6 +96,8 @@ class Command(BaseCommand):
         FORMAT_EMAIL = 'Email'
         FORMAT_MEETING = 'Meeting'
         FORMAT_MEETING_INVITE = 'Meeting Invite'
+        FORMAT_USE = 'Use'
+        FORMAT_MARKET_ANALYSIS = 'Market Analysis'
 
         with transaction.atomic():
             self.organization = Organization.objects.create(
@@ -205,71 +211,71 @@ class Command(BaseCommand):
                     (GROUP_PRODUCT, FACET_UI, FORMAT_REQUIREMENTS)
                 ],
                 (GROUP_PRODUCT, FACET_UI, FORMAT_IMPLEMENTATION_PLAN))
-            self.add_assignment(ROLE_TECH_FOUNDER,
-                                'build_plan')
-
             self.add_responsibility('write_code', [
                     (GROUP_PRODUCT, FACET_UI, FORMAT_IMPLEMENTATION_PLAN)
                 ],
                 (GROUP_PRODUCT, FACET_UI, FORMAT_TEST_PRODUCT))
-            self.add_assignment(ROLE_TECH_FOUNDER,
-                                'write_code')
-
             self.add_responsibility('pre_prod_test', [
                     (GROUP_PRODUCT, FACET_UI, FORMAT_TEST_PRODUCT)
                 ],
                 (GROUP_PRODUCT, FACET_UI, FORMAT_TEST))
-            self.add_assignment(ROLE_TECH_FOUNDER,
-                                'pre_prod_test')
-            self.add_assignment(ROLE_NON_TECH_FOUNDER,
-                                'pre_prod_test')
-
             self.add_responsibility('prod_deployment', [
                     (GROUP_PRODUCT, FACET_UI, FORMAT_TEST)
                 ],
                 (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYMENT))
-            self.add_assignment(ROLE_TECH_FOUNDER,
-                                'prod_deployment')
 
             self.add_responsibility('deployed_product', [
                     (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYMENT)
                 ],
                 (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT))
-            self.add_assignment(ROLE_TECH_FOUNDER,
-                                'deployed_product')
-
-            self.add_responsibility('focus_group_test_invite', [
-                    (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT)
-                ],
-                (GROUP_PRODUCT, FACET_UI, FORMAT_MEETING_INVITE))
-            self.add_assignment(ROLE_NON_TECH_FOUNDER,
-                                'focus_group_test_invite')
-            self.add_assignment(ROLE_LEAD,
-                                'accept_meeting')
-            self.add_assignment(ROLE_NON_TECH_FOUNDER, 'refine_concepts')
-            self.add_assignment(ROLE_TECH_FOUNDER, 'refine_concepts')
-
-            self.delete_assignment(ROLE_TECH_FOUNDER, 'build_plan',
-                                   'write_code', 'prod_deployment',
-                                   'deployed_product', 'write_code',
-                                   'pre_prod_test')
-            self.delete_assignment(ROLE_NON_TECH_FOUNDER, 'focus_group_test_invite', 'pre_prod_test')
             self.add_role(ROLE_ENGINEER, GROUP_PRODUCT)
             self.add_assignment(ROLE_ENGINEER, 'build_plan',
                                    'write_code', 'prod_deployment',
                                    'deployed_product', 'write_code',
                                    'pre_prod_test')
-            self.add_assignment(ROLE_NON_TECH_FOUNDER, 'focus_group_test_invite', 'pre_prod_test')
 
-    #         ROLE_DESIGN
-    # ROLE_ENGINEER
-            #
-            # self.add_responsibility('product_meeting', [
-            #         (GROUP_PRODUCT, FACET_UI, FORMAT_MEETING)
-            #     ],
-            #     (GROUP_PRODUCT, FACET_UI, FORMAT_MEETING))
-            # self.add_assignment(ROLE_TECH_FOUNDER, 'product_meeting')
-            # self.add_assignment(ROLE_NON_TECH_FOUNDER, 'product_meeting')
+
+            self.add_responsibility('trial_product', [
+                   (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT)
+               ],
+               (GROUP_PRODUCT, FACET_UI, FORMAT_USER_QUERY))
+
+            self.add_assignment(ROLE_LEAD, 'trial_product')
+
+            self.add_role(ROLE_SUPPORT, GROUP_OPERATIONS)
+
+            self.add_responsibility('response_to_user', [
+                  (GROUP_PRODUCT, FACET_UI, FORMAT_USER_QUERY)
+              ],
+              (GROUP_PRODUCT, FACET_UI, FORMAT_USER_RESPONSE))
+
+            self.add_assignment(ROLE_SUPPORT, 'response_to_user')
+
+            self.add_responsibility('purchase_product', [
+                 (GROUP_PRODUCT, FACET_UI, FORMAT_USER_RESPONSE)
+             ],
+             (GROUP_PRODUCT, FACET_UI, FORMAT_USE))
+
+            self.add_responsibility('use_product', [
+                  (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT)
+              ],
+              (GROUP_PRODUCT, FACET_UI, FORMAT_USE))
+
+            self.add_assignment(ROLE_LEAD, 'purchase_product')
+
+            self.add_role(ROLE_CUSTOMER, GROUP_MARKET)
+            self.add_assignment(ROLE_CUSTOMER, 'purchase_product',
+                'use_product', 'trial_product')
+
+            self.delete_role(ROLE_LEAD)
+            self.add_responsibility('market_analysis', [
+                  (GROUP_PRODUCT, FACET_UI, FORMAT_USE)
+              ],
+              (GROUP_PRODUCT, FACET_UI, FORMAT_MARKET_ANALYSIS))
+
+            self.add_assignment(ROLE_NON_TECH_FOUNDER, 'market_analysis')
+
+
 
 
 

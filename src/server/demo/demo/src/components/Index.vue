@@ -79,8 +79,11 @@ export default {
     }`
   },
   methods: {
+    getElement(cy, nodeId) {
+      return cy.getElementById(nodeId)
+    },
     toggleElement (cy, nodeId, isHidden) {
-      const elements = cy.elements('[id="' + nodeId + '"]')
+      const elements = this.getElement(cy, nodeId)
       if (isHidden) {
         elements.hide()
       } else {
@@ -91,33 +94,6 @@ export default {
       this.elements.push(cy.add({
         data: data
       }))
-    },
-    pushEdges (cy, data) {
-      data.forEach((datum) => {
-        const edgeId = [
-          datum.source,
-          datum.target,
-          datum.content_type
-        ].join(',')
-        datum.id = edgeId
-      })
-
-      var numberOfEdges = 0
-      data.forEach((datum) => {
-        if (cy.elements('[id="' + datum.id + '"]').length === 0) {
-          this.elements.push(cy.add({
-            data: datum
-          }))
-          numberOfEdges++
-        }
-      })
-      this.numberOfEdges.push(numberOfEdges)
-    },
-    popEdges (cy, data) {
-      const count = this.numberOfEdges.pop()
-      for (var i = 0; i < count; i++) {
-        cy.remove(this.elements.pop())
-      }
     },
     popNode (cy) {
       cy.remove(this.elements.pop())
@@ -131,6 +107,169 @@ export default {
     },
     roleColor (role) {
       return this.group_colors[role.fields.group]
+    },
+    incrementRoleInputType (role, contentType) {
+      if (!this.edgeMeta.rolesWithInputType[contentType.pk]) {
+        this.$set(this.edgeMeta.rolesWithInputType, contentType.pk, {})
+      }
+      if (!this.edgeMeta.rolesWithInputType[contentType.pk][role.pk]) {
+        this.$set(this.edgeMeta.rolesWithInputType[contentType.pk], role.pk, 0)
+      }
+      this.edgeMeta.rolesWithInputType[contentType.pk][role.pk]++
+    },
+    decrementRoleInputType (role, contentType) {
+      this.edgeMeta.rolesWithInputType[contentType.pk][role.pk]--
+    },
+    incrementRoleOutputType (role, contentType) {
+      if (!this.edgeMeta.rolesWithOutputType[contentType.pk]) {
+        this.$set(this.edgeMeta.rolesWithOutputType, contentType.pk, {})
+      }
+      if (!this.edgeMeta.rolesWithOutputType[contentType.pk][role.pk]) {
+        this.$set(this.edgeMeta.rolesWithOutputType[contentType.pk], role.pk, 0)
+      }
+      this.edgeMeta.rolesWithOutputType[contentType.pk][role.pk]++
+    },
+    decrementRoleOutputType (role, contentType) {
+      this.edgeMeta.rolesWithOutputType[contentType.pk][role.pk]--
+    },
+    rolesWithOutputType (contentType) {
+      return Object.keys(
+        this.edgeMeta.rolesWithOutputType[contentType.pk] ||
+        {}).filter((rolePk) =>
+          this.edgeMeta.rolesWithOutputType[contentType.pk][rolePk] > 0)
+        .map((rolePk) => {
+          return this.data[rolePk]
+        })
+    },
+    rolesWithInputType (contentType) {
+      return Object.keys(
+        this.edgeMeta.rolesWithInputType[contentType.pk] ||
+        {}).filter((rolePk) =>
+          this.edgeMeta.rolesWithInputType[contentType.pk][rolePk] > 0)
+        .map((rolePk) => {
+          return this.data[rolePk]
+        })
+    },
+    incrementEdge (inputRole, role, contentType) {
+      const edgeHash = [
+        inputRole.pk,
+        role.pk,
+        contentType.pk
+      ].join(',')
+      if (!this.edgeMeta.edgePresence[edgeHash]) {
+        this.$set(this.edgeMeta.edgePresence, edgeHash, 0)
+      }
+      this.edgeMeta.edgePresence[edgeHash]++
+      return this.edgeMeta.edgePresence[edgeHash]
+    },
+    decrementEdge (inputRole, role, contentType) {
+      const edgeHash = [
+        inputRole.pk,
+        role.pk,
+        contentType.pk
+      ].join(',')
+      this.edgeMeta.edgePresence[edgeHash]--
+      return this.edgeMeta.edgePresence[edgeHash]
+    },
+    edgePushed (inputRole, role, contentType) {
+      const edgeHash = [
+        inputRole.pk,
+        role.pk,
+        contentType.pk
+      ].join(',')
+      return this.edgeMeta.edgePushed[edgeHash]
+    },
+    edgeHash (inputRole, role, contentType) {
+      return [
+        inputRole.pk,
+        role.pk,
+        contentType.pk
+      ].join(',')
+    },
+    popEdge (cy, assignment, inputRole, role, contentType) {
+      const edgeHash = this.edgeHash(inputRole, role, contentType)
+      if (this.edgeMeta.assignmentHasEdge[assignment.pk]) {
+        this.edgeMeta.edgePushed[edgeHash] = false
+        cy.remove(this.elements.pop())
+      }
+    },
+    pushEdge (cy, assignment, inputRole, role, contentType) {
+      const edgeHash = this.edgeHash(inputRole, role, contentType)
+      this.edgeMeta.edgePushed[edgeHash] = true
+      this.edgeMeta.assignmentHasEdge[assignment.pk] = true
+      this.elements.push(cy.add({
+        data: this.edgeData(inputRole, role, contentType)
+      }))
+    },
+    hideEdge (cy, inputRole, role, contentType) {
+      const edgeHash = this.edgeHash(inputRole, role, contentType)
+      this.toggleElement(cy, edgeHash, true)
+    },
+    showEdge (cy, inputRole, role, contentType) {
+      const edgeHash = this.edgeHash(inputRole, role, contentType)
+      this.toggleElement(cy, edgeHash, false)
+    },
+    toggleEdges (cy, assignment, valueTo) {
+      const role = this.data[assignment.fields.role]
+      const responsibility = this.data[assignment.fields.responsibility]
+      const outputType = this.data[responsibility.fields.output_type]
+      const inputTypes = this.inputTypes(assignment.fields.responsibility)
+
+      if (valueTo) {
+        // this.decrementRoleOutputType(role, outputType)
+        inputTypes.forEach((inputType) => {
+          this.rolesWithOutputType(inputType).forEach(
+            (inputRole) => {
+              const edgeCount = this.decrementEdge(
+                inputRole, role, inputType)
+              if (edgeCount <= 0) {
+                this.hideEdge(cy, inputRole, role, inputType)
+              }
+            })
+          this.decrementRoleInputType(role, inputType)
+        })
+        // this.rolesWithInputType(outputType).forEach(
+        //   (outputRole) => {
+        //     const edgeCount = this.decrementEdge(
+        //       role, outputRole, outputType)
+        //     if (edgeCount <= 0) {
+        //       this.hideEdge(cy, role, outputRole, outputType)
+        //     }
+        //   })
+      }
+      else {
+        // this.incrementRoleOutputType(role, outputType)
+        inputTypes.forEach((inputType) => {
+          this.rolesWithOutputType(inputType).forEach((inputRole) => {
+            this.incrementEdge(inputRole, role, inputType)
+            this.showEdge(cy, inputRole, role, inputType)
+          })
+          this.incrementRoleInputType(role, inputType)
+        })
+        // this.rolesWithInputType(outputType).forEach(
+        //   (outputRole) => {
+        //     this.incrementEdge(role, outputRole, outputType)
+        //     this.showEdge(cy, role, outputRole, outputType)
+        //   })
+      }
+
+    },
+    edgeData (inputRole, role, contentType) {
+      const edgeHash = this.edgeHash(inputRole, role, contentType)
+      return {
+        'id': edgeHash,
+        'name': [
+          this.data[contentType.fields.facet].fields.name,
+          this.data[contentType.fields.format].fields.name
+        ].join(' :: '),
+        'source': inputRole.pk,
+        'target': role.pk,
+        'content_type': contentType.pk,
+        'source_color': this.roleColor(inputRole),
+        'target_color': this.roleColor(role),
+        'classes': 'autorotate',
+        'line_color': '#666'
+      }
     },
     pushEvent (e) {
       this.appliedEvents.push(e)
@@ -182,53 +321,54 @@ export default {
               const inputTypes = this.inputTypes(
                 instance.fields.responsibility)
 
-              if (!(outputType.pk in this.rolesWithOutputType)) {
-                this.$set(this.rolesWithOutputType, outputType.pk, {})
-              }
-
-              if (!this.rolesWithOutputType[outputType.pk][role.pk]) {
-                this.$set(this.rolesWithOutputType[outputType.pk], role.pk, 0)
-              }
-              this.rolesWithOutputType[outputType.pk][role.pk]++
-              const pendingEdges = []
-
+              this.incrementRoleOutputType(role, outputType)
               inputTypes.forEach((inputType) => {
-                if (inputType.pk in this.rolesWithOutputType) {
-                  const inputRoles = Object.keys(
-                      this.rolesWithOutputType[inputType.pk])
-                    .filter((pk) =>
-                      this.rolesWithOutputType[inputType.pk][pk] > 0)
-                    .map((pk) => this.data[pk])
-                  inputRoles.forEach((inputRole) => {
-                    color = this.group_colors[instance.fields.group]
-                    const edgeDatum = {
-                      'name': [
-                        this.data[inputType.fields.facet].fields.name,
-                        this.data[inputType.fields.format].fields.name
-                      ].join(' :: '),
-                      'source': inputRole.pk,
-                      'target': role.pk,
-                      'content_type': inputType.pk,
-                      'source_color': this.roleColor(inputRole),
-                      'target_color': this.roleColor(role),
-                      'classes': 'autorotate',
-                      'line_color': '#666'
-                    }
-                    pendingEdges.push(edgeDatum)
-                  })
-                  if (inputRoles.length === 0) {
-                    console.log('No input role')
+                this.incrementRoleInputType(role, inputType)
+                this.rolesWithOutputType(inputType).forEach((inputRole) => {
+                  this.incrementEdge(inputRole, role, inputType)
+                  if (!this.edgePushed(inputRole, role, inputType)) {
+                    this.pushEdge(cy, instance, inputRole, role, inputType)
                   }
-                }
+                })
               })
-              this.$set(this.edges, instance.pk, pendingEdges)
-              this.pushEdges(cy, pendingEdges)
+              // this.rolesWithInputType(outputType).forEach((outputRole) => {
+              //   this.incrementEdge(role, outputRole, outputType)
+              //   if (!this.edgePushed(role, outputRole, outputType)) {
+              //     this.pushEdge(cy, instance, role, outputRole, outputType)
+              //   }
+              // })
+
+              /*
+              On Push
+              Increment edge presence for each role output to this assignment's inputs.
+
+              if (== 0) pushEdge
+
+              On Pop
+              Decrement edge presence for each role output to this assignment's inputs.
+
+              if (== 1) popEdge
+
+              On Delete
+              Decrement edge presence for each role output to this assignment's inputs.
+              Decrement edge presence for each role input from this assignment's output.
+
+              if (== 0) hideEdge
+
+              On Undelete
+              Increment edge presence for each role output to this assignment's inputs.
+              Increment edge presence for each role input from this assignment's output.
+
+              if (> 0) showEdge
+              */
+
               break
           }
           this.runLayout(cy)
         })
       }
       if (e.event === 'modified') {
+        const instance = e.instance
         this.$cytoscape.instance.then(cy => {
           for (var field in e.changes) {
             if (e.changes.hasOwnProperty(field)) {
@@ -238,18 +378,7 @@ export default {
               if (field === 'is_deleted') {
                 switch (e.instance.model) {
                   case 'role_model.assignment':
-                    const role = this.data[e.instance.fields.role]
-                    const responsibility = this.data[e.instance.fields.responsibility]
-                    const outputType = this.data[responsibility.fields.output_type]
-                    if (valueTo) {
-                      this.rolesWithOutputType[outputType.pk][role.pk]--
-                    }
-                    else {
-                      this.rolesWithOutputType[outputType.pk][role.pk]++
-                    }
-                    this.edges[e.instance.pk].forEach((edge) => {
-                      this.toggleElement(cy, edge.id, valueTo)
-                    })
+                    this.toggleEdges(e.instance, valueTo)
                     break
                   default:
                     this.toggleElement(cy, e.instance.pk, valueTo)
@@ -264,6 +393,7 @@ export default {
       var e = this.appliedEvents.pop()
       this.$cytoscape.instance.then(cy => {
         if (e.event === 'created') {
+          const instance = e.instance
           if (e.instance.model === 'role_model.role' ||
               e.instance.model === 'role_model.group') {
             this.$cytoscape.instance.then(cy => {
@@ -278,14 +408,19 @@ export default {
             this.$delete(this.group_colors, e.instance.pk)
           }
           if (e.instance.model === 'role_model.assignment') {
-            const responsibility = this.data[e.instance.fields.responsibility]
+            const role = this.data[instance.fields.role]
+            const responsibility = this.data[instance.fields.responsibility]
             const outputType = this.data[responsibility.fields.output_type]
-            const inputTypes = this.inputTypes(e.instance.fields.responsibility)
-            const role = this.data[e.instance.fields.role]
+            const inputTypes = this.inputTypes(
+              instance.fields.responsibility)
 
-            this.rolesWithOutputType[outputType.pk][role.pk]--
-            this.$cytoscape.instance.then(cy => {
-              this.popEdges(cy)
+            this.decrementRoleOutputType(role, outputType)
+            inputTypes.forEach((inputType) => {
+              this.decrementRoleInputType(role, inputType)
+              this.rolesWithOutputType(inputType).forEach((inputRole) => {
+                this.decrementEdge(inputRole, role, inputType)
+                this.popEdge(cy, instance, inputRole, role, inputType)
+              })
             })
           }
           this.$delete(this.data, e.instance.pk)
@@ -300,12 +435,7 @@ export default {
               if (field === 'is_deleted') {
                 switch (e.instance.model) {
                   case 'role_model.assignment':
-                    const role = this.data[e.instance.fields.role]
-                    const responsibility = this.data[e.instance.fields.responsibility]
-                    const outputType = this.data[responsibility.fields.output_type]
-                    this.edges[e.instance.pk].forEach((edge) => {
-                      this.toggleElement(cy, edge.id, valueFrom)
-                    })
+                    this.toggleEdges(e.instance, valueFrom)
                     break
                   default:
                     this.toggleElement(cy, e.instance.pk, valueFrom)
@@ -399,22 +529,26 @@ export default {
   },
   data () {
     return {
+      edgeMeta: {
+        rolesWithOutputType: {},
+        rolesWithInputType: {},
+        edgePresence: {},
+        edgePushed: {},
+        assignmentHasEdge: {}
+      },
       layout: {
         name: 'circle',
         padding: 20
       },
       data: {},
       roles: [],
-      edges: {},
       group_colors: {},
-      numberOfEdges: [],
       elements: [],
       appliedEvents: [],
       previousCursor: 0,
       currentIndex: 0,
       organizationEvents: [],
       responsibilityInputTypes: {},
-      rolesWithOutputType: {},
       cursor: 0,
       colors: [
         '#6FB1FC',

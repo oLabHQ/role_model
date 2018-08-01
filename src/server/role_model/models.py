@@ -3,7 +3,6 @@ from enum import auto
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
-from django.contrib.contenttypes.fields import GenericRelation
 
 from aldjemy.meta import AldjemyMeta
 from sqlalchemy.orm import aliased

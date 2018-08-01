@@ -65,13 +65,13 @@ class Command(BaseCommand):
         ROLE_TECH_FOUNDER = 'technical co-founder'
         ROLE_DESIGN = 'UX designer'
         ROLE_ENGINEER = 'Software Engineer'
-        ROLE_CUSTOMER = 'Customer'
 
         GROUP_ASSOCIATES = 'Associates'
         ROLE_FRIEND = 'friend'
 
         GROUP_MARKET = 'Market'
         ROLE_LEAD = 'lead'
+        ROLE_CUSTOMER = 'Customer'
 
         FACET_UI = 'User Interface'
         FACET_HR = 'Human Resource'
@@ -98,6 +98,16 @@ class Command(BaseCommand):
         FORMAT_MEETING_INVITE = 'Meeting Invite'
         FORMAT_USE = 'Use'
         FORMAT_MARKET_ANALYSIS = 'Market Analysis'
+
+        GROUP_OLAB = 'oLab'
+        ROLE_OLAB = 'oLab (hn (at) olab.com.au)'
+        FORMAT_MEETING_OLAB = 'Meeting With oLab'
+        FORMAT_CONCEPT_NEW_MARKET = 'Concept (Localization)'
+        FORMAT_REQUIREMENTS_NEW_MARKET = 'Requiremments Document (Localization)'
+        FORMAT_IMPLEMENTATION_PLAN_NEW_MARKET = 'Implementation Plan (Localization)'
+        FORMAT_DEPLOYED_PRODUCT_NEW_MARKET = 'Deployed Product (Localizationt)'
+        FORMAT_USE_NEW_MARKET = 'Use (Localization)'
+        ROLE_CUSTOMER_NEW_MARKET = 'Customer (Localization)'
 
         with transaction.atomic():
             self.organization = Organization.objects.create(
@@ -234,7 +244,6 @@ class Command(BaseCommand):
                                    'deployed_product', 'write_code',
                                    'pre_prod_test')
 
-
             self.add_responsibility('trial_product', [
                    (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT)
                ],
@@ -246,20 +255,17 @@ class Command(BaseCommand):
 
             self.add_responsibility('response_to_user', [
                   (GROUP_PRODUCT, FACET_UI, FORMAT_USER_QUERY)
-              ],
-              (GROUP_PRODUCT, FACET_UI, FORMAT_USER_RESPONSE))
+            ], (GROUP_PRODUCT, FACET_UI, FORMAT_USER_RESPONSE))
 
             self.add_assignment(ROLE_SUPPORT, 'response_to_user')
 
             self.add_responsibility('purchase_product', [
                  (GROUP_PRODUCT, FACET_UI, FORMAT_USER_RESPONSE)
-             ],
-             (GROUP_PRODUCT, FACET_UI, FORMAT_USE))
+            ], (GROUP_PRODUCT, FACET_UI, FORMAT_USE))
 
             self.add_responsibility('use_product', [
                   (GROUP_PRODUCT, FACET_UI, FORMAT_DEPLOYED_PRODUCT)
-              ],
-              (GROUP_PRODUCT, FACET_UI, FORMAT_USE))
+            ], (GROUP_PRODUCT, FACET_UI, FORMAT_USE))
 
             self.add_assignment(ROLE_LEAD, 'purchase_product')
 
@@ -270,14 +276,77 @@ class Command(BaseCommand):
             self.delete_role(ROLE_LEAD)
             self.add_responsibility('market_analysis', [
                   (GROUP_PRODUCT, FACET_UI, FORMAT_USE)
-              ],
-              (GROUP_PRODUCT, FACET_UI, FORMAT_MARKET_ANALYSIS))
+            ],
+            (GROUP_PRODUCT, FACET_UI, FORMAT_MARKET_ANALYSIS))
 
             self.add_assignment(ROLE_NON_TECH_FOUNDER, 'market_analysis')
 
+            self.add_responsibility('meet_olab', [
+                  (GROUP_PRODUCT, FACET_UI, FORMAT_MARKET_ANALYSIS)
+            ],
+            (GROUP_OLAB, FACET_UI, FORMAT_MEETING_OLAB))
+            self.add_assignment(ROLE_NON_TECH_FOUNDER, 'meet_olab')
+            self.add_assignment(ROLE_TECH_FOUNDER, 'meet_olab')
 
+            self.add_role(ROLE_OLAB, GROUP_OLAB)
 
+            self.add_responsibility('new_market_concept', [
+                  (GROUP_OLAB, FACET_UI, FORMAT_MEETING_OLAB)
+            ],
+            (GROUP_OLAB, FACET_UI, FORMAT_CONCEPT_NEW_MARKET))
 
+            self.add_responsibility('new_market_design', [
+                  (GROUP_OLAB, FACET_UI, FORMAT_CONCEPT_NEW_MARKET)
+            ],
+            (GROUP_OLAB, FACET_UI, FORMAT_REQUIREMENTS_NEW_MARKET))
+
+            self.add_responsibility('new_market_plan', [
+                  (GROUP_OLAB, FACET_UI, FORMAT_REQUIREMENTS_NEW_MARKET)
+            ],
+            (GROUP_OLAB, FACET_UI, FORMAT_IMPLEMENTATION_PLAN_NEW_MARKET))
+
+            self.add_responsibility('new_market_build', [
+                  (GROUP_OLAB, FACET_UI, FORMAT_IMPLEMENTATION_PLAN_NEW_MARKET)
+            ],
+            (GROUP_OLAB, FACET_UI, FORMAT_DEPLOYED_PRODUCT_NEW_MARKET))
+            self.add_responsibility('new_market_market', [
+                  (GROUP_OLAB, FACET_UI, FORMAT_DEPLOYED_PRODUCT_NEW_MARKET)
+            ],
+            (GROUP_OLAB, FACET_UI, FORMAT_USE_NEW_MARKET))
+
+            self.add_responsibility('new_market_use', [
+                  (GROUP_OLAB, FACET_UI, FORMAT_USE_NEW_MARKET)
+            ],
+            (GROUP_OLAB, FACET_UI, FORMAT_USER_QUERY))
+            self.add_assignment(ROLE_OLAB,
+                'new_market_concept',
+                'new_market_design',
+                'new_market_plan',
+                'new_market_build')
+            self.add_role(ROLE_CUSTOMER_NEW_MARKET, GROUP_MARKET)
+            self.add_assignment(ROLE_CUSTOMER_NEW_MARKET,
+                'new_market_market', 'new_market_use')
+
+            self.add_responsibility('new_market_improvement', [
+                  (GROUP_OLAB, FACET_UI, FORMAT_USER_QUERY)
+            ], (GROUP_OLAB, FACET_UI, FORMAT_CONCEPT_NEW_MARKET))
+            self.add_responsibility('new_market_analysis', [
+                  (GROUP_OLAB, FACET_UI, FORMAT_USE_NEW_MARKET)
+            ], (GROUP_OLAB, FACET_UI, FORMAT_MARKET_ANALYSIS))
+
+            self.add_assignment(ROLE_OLAB, 'new_market_improvement',
+                                'new_market_analysis')
+
+            self.add_responsibility('new_market_insights', [
+                  (GROUP_OLAB, FACET_UI, FORMAT_MARKET_ANALYSIS)
+            ], (GROUP_PRODUCT, FACET_UI, FORMAT_MARKET_ANALYSIS))
+
+            self.add_assignment(ROLE_NON_TECH_FOUNDER, 'new_market_insights')
+            self.add_assignment(ROLE_TECH_FOUNDER, 'new_market_insights')
+
+            self.add_responsibility('new_market_concepts', [
+                  (GROUP_PRODUCT, FACET_UI, FORMAT_MARKET_ANALYSIS)
+            ], (GROUP_PRODUCT, FACET_UI, FORMAT_CONCEPT))
 
     def add_group(self, name):
         self.increment_date()

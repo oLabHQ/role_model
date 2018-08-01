@@ -1,10 +1,6 @@
 import graphene
-import json
 
-from django.apps import apps
 from django.conf import settings
-from django.core import serializers
-from django.db import connection
 from graphene_django import DjangoObjectType
 
 from role_model.models import Deliverable as DeliverableModel

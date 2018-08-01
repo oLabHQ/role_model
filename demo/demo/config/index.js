@@ -46,7 +46,8 @@ module.exports = {
   build: {
     // Template for index.html
     index: path.resolve(__dirname, '../../templates/demo/index.html'),
-
+    host: 'aqueous-meadow-37878.herokuapp.com',
+    port: '80',
     // Paths
     assetsRoot: path.resolve(__dirname, '../../'),
     assetsSubDirectory: 'static/demo/client',

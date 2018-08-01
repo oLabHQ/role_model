@@ -17,7 +17,7 @@ import VueApollo from 'vue-apollo'
 import VueCytoscape from 'vue-cytoscape'
 
 const httpLink = new HttpLink({
-  uri: 'http://localhost:8000/demo/graphql',
+  uri: 'http://aqueous-meadow-37878.herokuapp.com/demo/graphql',
   credentials: 'include'
 })
 

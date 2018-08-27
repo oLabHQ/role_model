@@ -4,7 +4,7 @@ eric (at) olab.com.au
 
 Develop: Here's a little something we're working on:
 
-Video: https://youtu.be/hfGPJ2uNRt0
+https://youtu.be/hfGPJ2uNRt0
 
 Give us a ping, let's see how we can help you.
 

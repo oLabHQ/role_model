@@ -2,7 +2,7 @@
 
 eric (at) olab.com.au
 
-Develop: Here's a little something we're working on:
+Here's a little something we're working on:
 
 https://youtu.be/hfGPJ2uNRt0
 
